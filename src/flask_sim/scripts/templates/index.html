@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ROS Flask Integration</title>
+    <style>
+        #map-container {
+            position: relative;
+            width: 500px; /* Adjust width as needed */
+            height: 500px; /* Adjust height as needed */
+        }
+        #map-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .map-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <h1>ROS Live Information</h1>
+    <h3>Robot 1 info</h3>
+    <p>Linear Speed: <span id="linear">0</span></p>
+    <p>Angular Speed: <span id="angular">0</span></p>
+    <p>Location: Latitude: <span id="latitude">0</span>, Longitude: <span id="longitude">0</span></p>
+    <div id="map-container" style="border: solid black;">
+        <img id="map-image" src="{{ url_for('static', filename='images/course.jpg') }}">
+        <div id="marker" class="map-marker" style="color: green;"></div> <!-- Added id="marker" -->
+    </div>
+    <script>
+        function updateMarkerPosition() {
+            fetch('/position')
+            .then(response => response.json())
+            .then(data => {
+                var x = data.pose.x * 80;
+                var y = data.pose.y * 80;
+
+                var mapContainer = document.getElementById('map-container');
+                var mapWidth = mapContainer.clientWidth;
+                var mapHeight = mapContainer.clientHeight;
+
+                var scaleX = mapWidth / 3503; 
+                var scaleY = mapHeight / 3501; 
+
+                var marker = document.getElementById('marker');
+                marker.style.top = Math.abs(y * scaleY) + 'px';
+                marker.style.left = Math.abs(x * scaleX) + 'px';
+            });
+        }
+
+        // Function to update speed
+        function updateLinear() {
+            fetch('/linear_speed')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('linear').textContent = data.linear;
+            });
+        }
+
+        function updateAngular() {
+            fetch('/angular_speed')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('angular').textContent = data.angular;
+            });
+        }
+
+        function updateGps() {
+            fetch('/location')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('latitude').textContent = data.gps.latitude;
+                document.getElementById('longitude').textContent = data.gps.longitude;
+            });
+        }
+
+        // Call update functions every 1 second
+        setInterval(updateLinear, 10); // 1000 milliseconds = 1 second
+        setInterval(updateAngular, 10);
+        setInterval(updateGps, 10);
+        setInterval(updateMarkerPosition, 10);
+    </script>
+</body>
+</html>
+
+
