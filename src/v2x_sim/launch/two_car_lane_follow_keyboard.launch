@@ -20,8 +20,8 @@
   <include file="$(find tiny_keyboard_reader)/launch/keyboard_reader.launch" />
 
 
-  <node name="keyboard_stop"  pkg="follow_lane_pkg" type="keyboard_stop.py" 
-          output="screen" />
+  <!-- <node name="keyboard_stop"  pkg="follow_lane_pkg" type="keyboard_stop.py" 
+          output="screen" /> -->
 
   <!-- ============= -->
   <!-- Define robots -->
@@ -39,7 +39,7 @@
         Yr_init:  3.0
         Theta_init: deg(0.0)
     </rosparam>
-    <node name="follow_lane_gz" pkg="follow_lane_pkg" type="follow_line_gz_5.py" 
+    <node name="follow_lane_gz" pkg="v2x_sim" type="follow_line_gz_5.py" 
           required="true" output="screen">
    	   <param name="imgtopic_name" type="str" value="camera/image_raw" />   
     </node>
@@ -54,7 +54,7 @@
         Yr_init:  29.0
         Theta_init: deg(0.0)
     </rosparam>
-    <node name="follow_lane_gz" pkg="follow_lane_pkg" type="follow_line_gz_5.py" 
+    <node name="follow_lane_gz" pkg="v2x_sim" type="follow_line_gz_5.py" 
           required="true" output="screen">
    	   <param name="imgtopic_name" type="str" value="camera/image_raw" />   
     </node>
