@@ -8,7 +8,7 @@ import numpy as np
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.server import Server
-from follow_lane_pkg.cfg import FollowLaneConfig   # packageName.cfg
+from v2x_sim.cfg import FollowLaneConfig   # packageName.cfg
 from geometry_msgs.msg import Twist
 
 vel_msg = Twist()
