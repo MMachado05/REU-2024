@@ -1,0 +1,47 @@
+<launch>
+
+  <!-- ==================== -->
+  <!-- GazelleSim Arguments -->
+  <!-- ==================== -->
+  <arg name="show_dynamic_reconfigure" default="true" />
+  <arg name="show_steering" default="false" />
+  <arg name="show_cam_param" default="false" /> 
+
+  
+  <!-- ========================= -->
+  <!-- Set simulation parameters -->
+  <!-- ========================= -->
+  <param name="map_dir" value="$(find gazelle_sim_color_line_follow)/map" />
+  <rosparam command="load"
+            file="$(find gazelle_sim_color_line_follow)/map/color_line_follow.yaml" />
+
+
+  <!-- ============= -->
+  <!-- Define robots -->
+  <!-- ============= -->
+  <rosparam>
+    robot_list: ["robot1"]
+  </rosparam>
+  
+  <!-- Define robot1 -->
+  <group ns="robot1">
+    <rosparam command="load"
+              file="$(find gazelle_sim)/robot/basic_differential_circ.yaml" />
+    <rosparam>
+        Xr_init: 1.0
+        Yr_init: -0.20
+        Theta_init: deg(0.0)
+    </rosparam>
+  </group>
+
+
+  <!-- ================= -->
+  <!-- Launch GazelleSim -->
+  <!-- ================= -->
+  <include file="$(find gazelle_sim)/launch/gazelle_sim.launch">
+    <arg name="show_dynamic_reconfigure" value="$(arg show_dynamic_reconfigure)" />
+    <arg name="show_steering" value="$(arg show_steering)" />
+    <arg name="show_cam_param" value="$(arg show_cam_param)" />
+  </include>
+    
+</launch>

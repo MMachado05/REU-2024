@@ -1,0 +1,73 @@
+<launch>
+
+  <!-- ==================== -->
+  <!-- GazelleSim Arguments -->
+  <!-- ==================== -->
+  <arg name="show_dynamic_reconfigure" default="true" />
+  <arg name="show_steering" default="false" />
+  <arg name="show_cam_param" default="false" /> 
+
+
+  <!-- ========================= -->
+  <!-- Set simulation parameters -->
+  <!-- ========================= -->
+  <param name="map_dir" value="$(find v2x_sim)/maps" />
+  <rosparam command="load"
+            file="$(find v2x_sim)/maps/map.yaml" />
+
+  
+  <!-- Keyboard Reader -->
+  <include file="$(find tiny_keyboard_reader)/launch/keyboard_reader.launch" />
+
+
+  <node name="keyboard_stop"  pkg="follow_lane_pkg" type="keyboard_stop.py" 
+          output="screen" />
+
+  <!-- ============= -->
+  <!-- Define robots -->
+  <!-- ============= -->
+  <rosparam>
+    robot_list: ["robot1", "robot2"]
+  </rosparam>
+  
+  <!-- Define robot1 -->
+  <group ns="robot1">
+    <rosparam command="load"
+              file="$(find v2x_sim)/robot/ACTor.yaml" />
+    <rosparam>
+        Xr_init: 2.0
+        Yr_init:  3.0
+        Theta_init: deg(0.0)
+    </rosparam>
+    <node name="follow_lane_gz" pkg="follow_lane_pkg" type="follow_line_gz_5.py" 
+          required="true" output="screen">
+   	   <param name="imgtopic_name" type="str" value="camera/image_raw" />   
+    </node>
+  </group>
+  
+  <!-- Define robot2 -->
+  <group ns="robot2">
+    <rosparam command="load"
+              file="$(find v2x_sim)/robot/ACTor.yaml" />
+    <rosparam>
+        Xr_init: 3.0
+        Yr_init:  29.0
+        Theta_init: deg(0.0)
+    </rosparam>
+    <node name="follow_lane_gz" pkg="follow_lane_pkg" type="follow_line_gz_5.py" 
+          required="true" output="screen">
+   	   <param name="imgtopic_name" type="str" value="camera/image_raw" />   
+    </node>
+  </group>
+
+
+  <!-- ================= -->
+  <!-- Launch GazelleSim -->
+  <!-- ================= -->
+  <include file="$(find gazelle_sim)/launch/gazelle_sim.launch">
+    <arg name="show_dynamic_reconfigure" value="$(arg show_dynamic_reconfigure)" />
+    <arg name="show_steering" value="$(arg show_steering)" />
+    <arg name="show_cam_param" value="$(arg show_cam_param)" />
+  </include>
+
+</launch>

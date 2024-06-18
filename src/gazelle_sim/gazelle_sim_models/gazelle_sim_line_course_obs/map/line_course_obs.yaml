@@ -1,0 +1,18 @@
+# Field image location
+field_image_file: 'line_course_obstacle.png'
+
+# Image file scaling and center
+pixels_per_meter: 250.0
+x_center_img: 750
+y_center_img: 750
+img_view_scale: 0.50
+
+
+# Place rectangles and circles
+rectlist: [ [1.75, 0.10, 1.95, 0.10, 1.95, -0.10, 1.75, -0.10],
+            [-1.95, 0.10, -1.75, 0.10, -1.75, -0.10, -1.95, -0.10] ]
+
+circlist: [ [ 0.00,  2.06, 0.10],
+            [ 0.00, -2.14, 0.10] ]
+
+

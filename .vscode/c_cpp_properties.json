@@ -1,0 +1,30 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/opt/ros/noetic/include/**",
+        "/home/michael/catkin_ws/devel/include/**",
+        "/home/michael/catkin_ws/src/color_pct_pkg/include/**",
+        "/home/michael/catkin_ws/src/cvros0_pkg/include/**",
+        "/home/michael/catkin_ws/src/dyn_rcfg0_pkg/include/**",
+        "/home/michael/catkin_ws/src/follow_lane_pkg/include/**",
+        "/home/michael/catkin_ws/src/gazelle_sim/gazelle_sim/include/**",
+        "/home/michael/catkin_ws/src/hi_world_pkg/include/**",
+        "/home/michael/catkin_ws/src/simple_sim/include/**",
+        "/home/michael/catkin_ws/src/turtlesim_tst_pkg/include/**",
+        "/home/michael/reu_ws/src/v2x_sim/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

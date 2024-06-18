@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>gazelle_sim_color_line_follow</name>
+  <version>0.0.1</version>
+  <description>GazelleSim to practice line following on a multi-colored background</description>
+
+  <maintainer email="gderose2@gmail.com">Giuseppe DeRose Jr.</maintainer>
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+</package>
