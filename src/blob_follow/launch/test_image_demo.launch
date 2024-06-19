@@ -29,9 +29,8 @@
         Yr_init:  0.0
         Theta_init: deg(0.0)
     </rosparam>
-    <node name="blob" pkg="blob_follow" type="blob.py" output="screen">
-        <param name="image_topic" value="camera/image_raw" />
-        <param name="twist_topic" value="cmd_vel" />
+    <node name="test_image_demo" pkg="blob_follow" type="test_image_demo.py" output="screen">
+        <param name="draw_blob" value="True" />
     </node>
   </group>
 

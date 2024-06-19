@@ -4,7 +4,7 @@ import rospy
 from geometry_msgs.msg import Twist
 import cv2 as cv
 from dynamic_reconfigure.server import Server
-from lane_follow_blob.cfg import BlobConfig
+from blob_follow.cfg import BlobConfig
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from numpy import ndarray
