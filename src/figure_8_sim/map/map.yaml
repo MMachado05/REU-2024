@@ -1,0 +1,10 @@
+# Field image file name
+field_image_file: 'course.png'
+
+# Image file scaling and center
+pixels_per_meter: 50.0
+x_center_img: 50
+y_center_img: 1550
+img_view_scale: 0.35
+
+

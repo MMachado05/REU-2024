@@ -1,0 +1,35 @@
+<launch>
+
+  <!--MAP-->
+  <param name="map_dir" value="$(find figure_8_sim)/map" />
+  <rosparam command="load" file="$(find figure_8_sim)/map/map.yaml" />
+
+  <!--RSU-->
+  <node name="rsu"  pkg="figure_8_sim" type="rsu.py" output="screen" /> 
+
+  <!--ROBOTS-->
+  <rosparam>
+    robot_list: ["robot1"]
+  </rosparam>
+  
+  <!--Robot 1-->
+  <group ns="robot1">
+    <node name="vc_node" pkg="figure_8_sim" type="vc.py" output="screen">  
+      <param name="pose_name" type="str" value="odom" />  
+    </node>
+    <node name="follow_lane_node"  pkg="figure_8_sim" type="follow_lane.py" output="screen"> 
+      <param name="imgtopic_name" type="str" value="camera/image_raw" /> 
+    </node>
+    <rosparam command="load" file="$(find figure_8_sim)/robot/ACTor.yaml" />
+    <rosparam>
+        Xr_init: 30.26
+        Yr_init:  -15.8
+        Theta_init: deg(90.0)
+        
+    </rosparam>
+  </group>
+  
+  <!--GAZELLE SIM-->
+  <include file="$(find gazelle_sim)/launch/gazelle_sim.launch"></include>
+
+</launch>
