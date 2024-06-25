@@ -26,8 +26,8 @@ bridge = CvBridge()
 check = False
 start_time = None
 stop = None
+stop0 = None
 stop1 = None
-stop2 = None
 left_time = None
 current_pose = None
 canvas = None
@@ -64,18 +64,20 @@ def dyn_rcfg_cb(config, level):
 
 # CALLBACK FUNCTIONS
 # stop light callback
-def stop_cb1(msg):
-    global stop1, vel
-    temp = stop1
-    stop1 = msg.data
-    if temp != stop1:
+# horizontal
+def stop_cb0(msg):
+    global stop0, vel
+    temp = stop0
+    stop0 = msg.data
+    if temp != stop0:
         # adjust speed when light changes
         vel = compute_speed_to_intersection()
     motion()
 
-def stop_cb2(msg):
-    global stop2, vel
-    stop2 = msg.data
+# vertical
+def stop_cb1(msg):
+    global stop1, vel
+    stop1 = msg.data
 
 # light timer callback
 def time_cb(msg):
@@ -100,7 +102,7 @@ def angular_vel_cb(gap):
 # DYNAMIC SPEED ALGORITHM
 # compute distance to intersection and adjust speed if needed
 def compute_speed_to_intersection():
-    global intersections, left_time, current_pose, waypoints, stop, stop1, stop2, vel
+    global intersections, left_time, current_pose, waypoints, stop, stop0, stop1, vel
     
     if not current_pose or not left_time or vel == 0:
         return 5.0 
@@ -121,12 +123,14 @@ def compute_speed_to_intersection():
         for int in intersections:
             if waypoints[i + 1] == int[:2]:
                 direction = int[2]
-                break
+            
             
     if direction == 0:
-        stop = stop1
+        stop = stop0
+        print(f"horizontal - stoping? {stop}")
     else:
-        stop = stop2
+        stop = stop1
+        print(f"vertical - stopping? {stop}")
 
     if stop: # light is red
         t = total_distance / vel # time left to arrive at intersection with current speed
@@ -182,8 +186,8 @@ if __name__ == '__main__':
     rospy.init_node('vc_node', anonymous=True)
     odom = rospy.get_param("~pose_name") 
     rospy.Subscriber(odom, Odometry, pose_cb)
-    stop_sub1 = rospy.Subscriber("/stoplight1", Bool, stop_cb1, queue_size=1)
-    stop_sub2 = rospy.Subscriber("/stoplight2", Bool, stop_cb2, queue_size=1)
+    stop_sub0 = rospy.Subscriber("/stoplight1", Bool, stop_cb0, queue_size=1)
+    stop_sub1 = rospy.Subscriber("/stoplight2", Bool, stop_cb1, queue_size=1)
     time_sub = rospy.Subscriber("/time", Float64, time_cb, queue_size=1)
     yellow_sub = rospy.Subscriber("yellow", Bool, yellow_cb, queue_size=1)
     angular_vel_sub = rospy.Subscriber("angular_vel", Float64, angular_vel_cb, queue_size=1)

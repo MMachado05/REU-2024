@@ -51,7 +51,7 @@ def stop_light():
             stop_pub1.publish(stop)
             stop_pub2.publish(not stop)
             time_pub.publish(left_time)
-            state_pub.publish(state2_msg)
+            state_pub.publish(state1_msg)
             rate.sleep()
 
         curr = time.time()
@@ -63,7 +63,7 @@ def stop_light():
             stop_pub1.publish(stop)
             stop_pub2.publish(not stop)
             time_pub.publish(left_time)
-            state_pub.publish(state1_msg)
+            state_pub.publish(state2_msg)
             rate.sleep()
 
 if __name__ == '__main__':
