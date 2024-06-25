@@ -5,7 +5,7 @@ import time
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.server import Server
-from follow_lane_pkg.cfg import FollowLaneConfig  
+from figure_8_sim.cfg import FollowLaneConfig  
 from geometry_msgs.msg import Twist
 import cv2 as cv
 import numpy as np
