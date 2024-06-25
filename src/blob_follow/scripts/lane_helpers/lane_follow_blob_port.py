@@ -11,7 +11,7 @@ from cv_bridge import CvBridge
 from typing import Dict, Tuple, List
 import cv2 as cv
 from dynamic_reconfigure.server import Server
-from lane_follow_blob.cfg import BlobConfig
+from blob_follow.cfg import BlobConfig
 import math
 import numpy as np
 from numpy import ndarray
