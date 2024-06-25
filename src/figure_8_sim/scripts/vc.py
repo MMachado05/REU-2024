@@ -123,14 +123,17 @@ def compute_speed_to_intersection():
         for int in intersections:
             if waypoints[i + 1] == int[:2]:
                 direction = int[2]
+                break
             
             
     if direction == 0:
         stop = stop0
-        print(f"horizontal - stoping? {stop}")
+        #print(f"horizontal - stoping? {stop}")
     else:
         stop = stop1
-        print(f"vertical - stopping? {stop}")
+        #print(f"vertical - stopping? {stop}")
+    
+    print(stop)
 
     if stop: # light is red
         t = total_distance / vel # time left to arrive at intersection with current speed
