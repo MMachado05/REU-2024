@@ -1,8 +1,8 @@
 from numpy import ndarray
 import cv2 as cv
 import numpy as np
-from lane_follow_blob.utils import cols, rows
-from lane_follow_blob.cfg import BlobConfig
+from lane_helpers.utils import cols, rows
+from blob_follow.cfg import BlobConfig
 
 
 def compute_lines(image: ndarray,
