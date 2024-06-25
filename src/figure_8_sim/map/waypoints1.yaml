@@ -1,6 +1,6 @@
 intersections:
-  - [35.97, 2.14]
-  - [30.43, -6.20]
+  - [35.97, 2.14, 0] #horizontal
+  - [30.43, -6.20, 1] #vertical
 
 waypoints:
   - [30.49, -5.17]

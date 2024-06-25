@@ -17,8 +17,9 @@ bridge = CvBridge()
 def stop_light():
 
     #  publishers
-    stop_pub = rospy.Publisher('/robot1/stoplight', Bool, queue_size=1)
-    time_pub = rospy.Publisher('/robot1/time', Float64, queue_size=1)
+    stop_pub1 = rospy.Publisher('/stoplight1', Bool, queue_size=1)
+    stop_pub2 = rospy.Publisher('/stoplight2', Bool, queue_size=1)
+    time_pub = rospy.Publisher('/time', Float64, queue_size=1)
     state_pub = rospy.Publisher('/states', Image, queue_size=1)
 
     rospack = rospkg.RosPack()
@@ -47,7 +48,8 @@ def stop_light():
         while (time.time() - curr) < 10:
             stop = Bool(data=True)
             left_time = Float64(data=10 - (time.time() - curr))  # Time remaining
-            stop_pub.publish(stop)
+            stop_pub1.publish(stop)
+            stop_pub2.publish(not stop)
             time_pub.publish(left_time)
             state_pub.publish(state2_msg)
             rate.sleep()
@@ -58,7 +60,8 @@ def stop_light():
         while (time.time() - curr) < 10:
             stop = Bool(data=False)
             left_time = Float64(data=10 - (time.time() - curr))  # Time remaining
-            stop_pub.publish(stop)
+            stop_pub1.publish(stop)
+            stop_pub2.publish(not stop)
             time_pub.publish(left_time)
             state_pub.publish(state1_msg)
             rate.sleep()

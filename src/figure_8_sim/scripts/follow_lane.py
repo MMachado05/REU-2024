@@ -84,8 +84,8 @@ if __name__ == '__main__':
     rospy.init_node('follow_lane')
     imgtopic = rospy.get_param("~imgtopic_name") 
     rospy.Subscriber(imgtopic, Image, image_callback)
-    yellow_pub = rospy.Publisher('/robot1/yellow', Bool, queue_size=1)
-    angular_vel_pub = rospy.Publisher('/robot1/angular_vel', Float64, queue_size=1)
+    yellow_pub = rospy.Publisher('yellow', Bool, queue_size=1)
+    angular_vel_pub = rospy.Publisher('angular_vel', Float64, queue_size=1)
     try:
         rospy.spin()
     except rospy.ROSInterruptException:

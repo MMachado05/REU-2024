@@ -26,6 +26,8 @@ bridge = CvBridge()
 check = False
 start_time = None
 stop = None
+stop1 = None
+stop2 = None
 left_time = None
 current_pose = None
 canvas = None
@@ -35,19 +37,23 @@ vel = 5.0
 angular_vel = 0.0
 yellow = False
 check = False
+lane = None
+waypoints = None
+intersections = None
 
 # find the path to the YAML file within the package
-rospack = rospkg.RosPack()
-package_path = rospack.get_path('figure_8_sim')
-yaml_file_path = f"{package_path}/map/waypoints.yaml"
+# rospack = rospkg.RosPack()
+# package_path = rospack.get_path('figure_8_sim')
+# lane = rospy.get_param("~lane_name") 
+# yaml_file_path = f"{package_path}/map/waypoints{lane}.yaml"
 
-# load waypoints from the YAML file
-with open(yaml_file_path, 'r') as file:
-    config = yaml.safe_load(file)
+# # load waypoints from the YAML file
+# with open(yaml_file_path, 'r') as file:
+#     config = yaml.safe_load(file)
 
-# intersection and waypoint positions from YAML
-intersections = config['intersections']
-waypoints = config['waypoints']
+# # intersection and waypoint positions from YAML
+# intersections = config['intersections']
+# waypoints = config['waypoints']
 
 # dynamic reconfigure
 def dyn_rcfg_cb(config, level):
@@ -58,14 +64,18 @@ def dyn_rcfg_cb(config, level):
 
 # CALLBACK FUNCTIONS
 # stop light callback
-def stop_cb(msg):
-    global stop, vel
-    temp = stop
-    stop = msg.data
-    if temp != stop:
+def stop_cb1(msg):
+    global stop1, vel
+    temp = stop1
+    stop1 = msg.data
+    if temp != stop1:
         # adjust speed when light changes
         vel = compute_speed_to_intersection()
     motion()
+
+def stop_cb2(msg):
+    global stop2, vel
+    stop2 = msg.data
 
 # light timer callback
 def time_cb(msg):
@@ -90,7 +100,7 @@ def angular_vel_cb(gap):
 # DYNAMIC SPEED ALGORITHM
 # compute distance to intersection and adjust speed if needed
 def compute_speed_to_intersection():
-    global intersections, left_time, current_pose, waypoints, stop, vel
+    global intersections, left_time, current_pose, waypoints, stop, stop1, stop2, vel
     
     if not current_pose or not left_time or vel == 0:
         return 5.0 
@@ -108,8 +118,15 @@ def compute_speed_to_intersection():
     total_distance = 0.0
     for i in range(closest_idx, len(waypoints) - 1):
         total_distance += math.sqrt((waypoints[i][0] - waypoints[i + 1][0])**2 + ((waypoints[i][1] - waypoints[i + 1][1])**2))
-        if waypoints[i + 1] in intersections:
-            break
+        for int in intersections:
+            if waypoints[i + 1] == int[:2]:
+                direction = int[2]
+                break
+            
+    if direction == 0:
+        stop = stop1
+    else:
+        stop = stop2
 
     if stop: # light is red
         t = total_distance / vel # time left to arrive at intersection with current speed
@@ -165,12 +182,26 @@ if __name__ == '__main__':
     rospy.init_node('vc_node', anonymous=True)
     odom = rospy.get_param("~pose_name") 
     rospy.Subscriber(odom, Odometry, pose_cb)
-    stop_sub = rospy.Subscriber("/robot1/stoplight", Bool, stop_cb, queue_size=1)
-    time_sub = rospy.Subscriber("/robot1/time", Float64, time_cb, queue_size=1)
-    yellow_sub = rospy.Subscriber("/robot1/yellow", Bool, yellow_cb, queue_size=1)
-    angular_vel_sub = rospy.Subscriber("/robot1/angular_vel", Float64, angular_vel_cb, queue_size=1)
-    velocity_pub = rospy.Publisher('/robot1/cmd_vel', Twist, queue_size=1)
+    stop_sub1 = rospy.Subscriber("/stoplight1", Bool, stop_cb1, queue_size=1)
+    stop_sub2 = rospy.Subscriber("/stoplight2", Bool, stop_cb2, queue_size=1)
+    time_sub = rospy.Subscriber("/time", Float64, time_cb, queue_size=1)
+    yellow_sub = rospy.Subscriber("yellow", Bool, yellow_cb, queue_size=1)
+    angular_vel_sub = rospy.Subscriber("angular_vel", Float64, angular_vel_cb, queue_size=1)
+    velocity_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
     srv = Server(FollowLaneConfig, dyn_rcfg_cb)
+
+    rospack = rospkg.RosPack()
+    package_path = rospack.get_path('figure_8_sim')
+    lane = rospy.get_param("~lane_name") 
+    yaml_file_path = f"{package_path}/map/waypoints{lane}.yaml"
+
+    # load waypoints from the YAML file
+    with open(yaml_file_path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    # intersection and waypoint positions from YAML
+    intersections = config['intersections']
+    waypoints = config['waypoints']
     
     try:
         rospy.spin()
