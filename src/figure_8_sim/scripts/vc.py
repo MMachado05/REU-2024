@@ -5,7 +5,7 @@ import time
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.server import Server
-from figure_8_sim.cfg import FollowLaneConfig  
+from follow_lane_pkg.cfg import FollowLaneConfig  
 from geometry_msgs.msg import Twist
 import cv2 as cv
 import numpy as np
@@ -15,7 +15,6 @@ import tkinter as tk
 import math
 import yaml
 import rospkg
-from visualize_stoplight import StoplightGUI
 
 # veihicle control
 # gets light status, intersection detection, and angular speed
@@ -66,16 +65,12 @@ def stop_cb(msg):
     if temp != stop:
         # adjust speed when light changes
         vel = compute_speed_to_intersection()
-    if gui:
-        gui.update_display(stop, left_time)
     motion()
 
 # light timer callback
 def time_cb(msg):
     global left_time
     left_time = 10 - msg.data # count down (periods of 10s)
-    if gui:
-        gui.update_display(stop, left_time)
 
 # vehicle position callback
 def pose_cb(pose):
@@ -165,10 +160,6 @@ def motion():
     # publish speed
     velocity_pub.publish(vel_msg)
 
-# update visual stoplight
-def update_gui():
-    gui.update_display(stop, left_time)
-
 # main method
 if __name__ == '__main__':
     rospy.init_node('vc_node', anonymous=True)
@@ -180,9 +171,6 @@ if __name__ == '__main__':
     angular_vel_sub = rospy.Subscriber("/robot1/angular_vel", Float64, angular_vel_cb, queue_size=1)
     velocity_pub = rospy.Publisher('/robot1/cmd_vel', Twist, queue_size=1)
     srv = Server(FollowLaneConfig, dyn_rcfg_cb)
-
-    gui = StoplightGUI(update_gui)  # Instantiate the GUI class
-    gui.run()
     
     try:
         rospy.spin()
