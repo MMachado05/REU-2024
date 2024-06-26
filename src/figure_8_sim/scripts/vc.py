@@ -42,20 +42,6 @@ waypoints = None
 intersections = None
 direction = 0
 
-# find the path to the YAML file within the package
-# rospack = rospkg.RosPack()
-# package_path = rospack.get_path('figure_8_sim')
-# lane = rospy.get_param("~lane_name") 
-# yaml_file_path = f"{package_path}/map/waypoints{lane}.yaml"
-
-# # load waypoints from the YAML file
-# with open(yaml_file_path, 'r') as file:
-#     config = yaml.safe_load(file)
-
-# # intersection and waypoint positions from YAML
-# intersections = config['intersections']
-# waypoints = config['waypoints']
-
 class Break(Exception): pass
 
 # dynamic reconfigure
@@ -73,10 +59,6 @@ def stop_cb0(msg):
     temp = stop_horiz
     stop_horiz = msg.data
 
-    # if stop_horiz:
-    #     print("STOP HORIZONTAL")
-    # else:
-    #     print("GO HORIZONTAL")
 
     if temp != stop_horiz:
         # adjust speed when light changes
@@ -87,11 +69,6 @@ def stop_cb0(msg):
 def stop_cb1(msg):
     global stop_vert, vel
     stop_vert = not stop_horiz
-
-    # if stop_vert:
-    #     print("STOP VERTICAL")
-    # else:
-    #     print("GO VERTICAL")
 
 # light timer callback
 def time_cb(msg):
@@ -142,7 +119,6 @@ def compute_speed_to_intersection():
                     raise Break
     except Break:
         pass
-                    
             
             
     if direction == 0:
@@ -158,22 +134,19 @@ def compute_speed_to_intersection():
 
     if stop: # light is red
         print("red")
-        # t = total_distance / vel # time left to arrive at intersection with current speed
-        # if t < 10: # if time to arrive less than changing to green light
-        #     return float(total_distance / 10 - 1) # adjust speed (-1 to ensure arriving a bit early)
-        # else:
-        #     return 5.0 # else keep speed
+        # x = x0+ vt -> t = dx / v
+        t = total_distance / 5.0 # time left to arrive at intersection with current speed
+        print(t)
+        if t < 10: # if time to arrive less than changing to green light
+            print(float(total_distance / 10))
+            return float(total_distance / 10) - 0.5 # adjust speed
+        
+        else:
+            return 5.0 # else keep speed
 
-        return 5.0
     else: # light is green
         print("green")
-        # t = total_distance / vel # time left to arrive at intersection with current speed
-        # if t > 10: # if time to arrive more than changing to red light
-        #     return float(total_distance / 20 - 1) # adjust speed for next green (-1 to ensure arriving a bit early)
-        # else:
-        #     return 5.0 # else keep speed
         return 5.0
-
 
 # make vehicle move
 def motion():
