@@ -115,7 +115,7 @@ def compute_speed_to_intersection():
             for int in intersections:
                 if waypoints[i + 1] == int[:2]:
                     direction = int[2]
-                    print(f"{int[3]} light")
+                    #print(f"{int[3]} light")
                     raise Break
     except Break:
         pass
@@ -123,29 +123,20 @@ def compute_speed_to_intersection():
             
     if direction == 0:
         stop = stop_horiz
-        # print(f"{stop_horiz} == {stop}")
     else:
         stop = not stop_horiz
-        # print(f"{stop_vert} == {stop}")
     
-    # print(stop)
-
-    curr_velocity = 5
+    t = total_distance / vel # time left to arrive at intersection with current speed
 
     if stop: # light is red
-        print("red")
-        # x = x0+ vt -> t = dx / v
-        t = total_distance / 5.0 # time left to arrive at intersection with current speed
-        print(t)
-        if t < 10: # if time to arrive less than changing to green light
-            print(float(total_distance / 10))
+        if t < 10 and vel == 5.0: # if time to arrive less than changing to green light
             return float(total_distance / 10) - 0.5 # adjust speed
-        
         else:
             return 5.0 # else keep speed
 
     else: # light is green
-        print("green")
+        # if t > 10 and t < 20 and vel == 5.0:
+        #     return float(total_distance / 20) 
         return 5.0
 
 # make vehicle move

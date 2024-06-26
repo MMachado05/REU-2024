@@ -12,6 +12,7 @@
     robot_list: ["robot1", "robot2", "robot3", "robot4"]
   </rosparam>
   
+
   <!--Robot 1-->
   <group ns="robot1">
     <node name="vc_node" pkg="figure_8_sim" type="vc.py" required="true" output="screen">  
@@ -24,7 +25,7 @@
     <rosparam command="load" file="$(find figure_8_sim)/robot/ACTor.yaml" />
     <rosparam>
         Xr_init: 30.26
-        Yr_init:  -15.8
+        Yr_init:  9.80
         Theta_init: deg(90.0)
         
     </rosparam>
@@ -41,8 +42,8 @@
     </node>
     <rosparam command="load" file="$(find figure_8_sim)/robot/ACTor.yaml" />
     <rosparam>
-        Xr_init: 13.60
-        Yr_init:  -0.83
+        Xr_init: 38.5
+        Yr_init:  -0.6
         Theta_init: deg(0.0)
     </rosparam>
   </group>
@@ -59,7 +60,7 @@
     <rosparam command="load" file="$(find figure_8_sim)/robot/ACTor.yaml" />
     <rosparam>
         Xr_init: 27.57
-        Yr_init:  17.51
+        Yr_init:  -9.4
         Theta_init: deg(-90.0)
     </rosparam>
   </group>
@@ -75,7 +76,7 @@
     </node>
     <rosparam command="load" file="$(find figure_8_sim)/robot/ACTor.yaml" />
     <rosparam>
-        Xr_init: 44.37
+        Xr_init: 20.66
         Yr_init: 2.31
         Theta_init: deg(180.0)
     </rosparam>
