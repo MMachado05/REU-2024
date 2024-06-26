@@ -1,8 +1,8 @@
 <launch>
 
   <!--MAP-->
-  <param name="map_dir" value="$(find v2x_sim)/map" />
-  <rosparam command="load" file="$(find v2x_sim)/map/intersection.yaml" />
+  <param name="map_dir" value="$(find v2x_sim)/maps" />
+  <rosparam command="load" file="$(find v2x_sim)/maps/intersection.yaml" />
 
   <!--RSU-->
   <node name="rsu"  pkg="v2x_sim" type="rsu.py" output="screen" /> 
@@ -14,7 +14,7 @@
   
   <!--Robot 1-->
   <group ns="robot1">
-    <node name="vc_node" pkg="figure_8_sim" type="vc.py" required="true" output="screen">  
+    <node name="vc_node" pkg="v2x_sim" type="vc.py" required="true" output="screen">  
       <param name="pose_name" type="str" value="odom" />  
       <param name="lane_name" type="int" value="1" />
     </node>
@@ -23,16 +23,16 @@
     </node>
     <rosparam command="load" file="$(find figure_8_sim)/robot/ACTor.yaml" />
     <rosparam>
-        Xr_init: 30.26
-        Yr_init:  -15.8
-        Theta_init: deg(90.0)
+        Xr_init: 17.69
+        Yr_init:  29.95
+        Theta_init: deg(180.0)
         
     </rosparam>
   </group>
 
   <!--Robot 2-->
   <group ns="robot2">
-    <node name="vc_node" pkg="figure_8_sim" type="vc.py" required="true" output="screen">  
+    <node name="vc_node" pkg="v2x_sim" type="vc.py" required="true" output="screen">  
       <param name="pose_name" type="str" value="odom" />  
       <param name="lane_name" type="int" value="2" />
     </node>
@@ -41,9 +41,9 @@
     </node>
     <rosparam command="load" file="$(find figure_8_sim)/robot/ACTor.yaml" />
     <rosparam>
-        Xr_init: 13.60
-        Yr_init:  -0.83
-        Theta_init: deg(0.0)
+        Xr_init: 16.67
+        Yr_init:  4.19
+        Theta_init: deg(180.0)
     </rosparam>
   </group>
   

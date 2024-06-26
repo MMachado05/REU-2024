@@ -24,8 +24,8 @@ def stop_light():
 
     rospack = rospkg.RosPack()
     package_path = rospack.get_path('v2x_sim')
-    state1_path = f"{package_path}/map/gr.png"
-    state2_path = f"{package_path}/map/rg.png"  # Assuming you meant to have different images
+    state1_path = f"{package_path}/maps/rg.png"
+    state2_path = f"{package_path}/maps/gr.png"  # Assuming you meant to have different images
 
     # Load images
     state1 = cv2.imread(state1_path)

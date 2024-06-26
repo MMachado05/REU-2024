@@ -1,9 +1,8 @@
 intersections:
-- [2.20, 16.67, 1, "S"]		# Top intersection line
-
+- [2.20, 16.67, 1, "S"]
 
 waypoints:
-- [1.99,15.59]	  			# Outter lane
+- [1.99,15.59]
 - [2.20,14.78]
 - [2.15,13.71]
 - [2.15,13.06]

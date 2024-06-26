@@ -1,9 +1,8 @@
 intersections:
-- [5.22,11.56, 0, "N"]  # Bottom intersection line
-
+- [5.22,11.56, 0, "N"]
 
 waypoints:
-- [5.48,12.53]    	 # Inner lane
+- [5.48,12.53]
 - [5.54,13.28]
 - [5.54,14.03]
 - [5.48,15.00]

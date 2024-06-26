@@ -93,6 +93,7 @@ def angular_vel_cb(gap):
 # DYNAMIC SPEED ALGORITHM
 # compute distance to intersection and adjust speed if needed
 def compute_speed_to_intersection():
+    print("STATE CHANGE!")
     global intersections, left_time, current_pose, waypoints, stop, stop_horiz, stop_vert, vel
     
     if not current_pose or not left_time or vel == 0:
@@ -115,7 +116,7 @@ def compute_speed_to_intersection():
             for int in intersections:
                 if waypoints[i + 1] == int[:2]:
                     direction = int[2]
-                    print(f"{int[3]} light")
+                    print(f"{rospy.get_namespace()}{int[3]} light")
                     raise Break
     except Break:
         pass
@@ -136,9 +137,9 @@ def compute_speed_to_intersection():
         print("red")
         # x = x0+ vt -> t = dx / v
         t = total_distance / 5.0 # time left to arrive at intersection with current speed
-        print(t)
+        #print(t)
         if t < 10: # if time to arrive less than changing to green light
-            print(float(total_distance / 10))
+            # print(float(total_distance / 10))
             return float(total_distance / 10) - 0.5 # adjust speed
         
         else:
@@ -165,12 +166,12 @@ def motion():
         check = True
         start_time = time.time()
     # go straight for some time
-    elif start_time:
-        if abs(current_time - start_time) < 3.5:
-            pass
-        else:
-            start_time = None
-            check = False
+    # elif start_time:
+    #     if abs(current_time - start_time) < 3.5:
+    #         pass
+    #     else:
+    #         start_time = None
+    #         check = False
     # other cases just go at vel
     else:
         if drive:

@@ -136,7 +136,7 @@ def compute_speed_to_intersection():
         print("red")
         # x = x0+ vt -> t = dx / v
         t = total_distance / 5.0 # time left to arrive at intersection with current speed
-        print(t)
+        #print(t)
         if t < 10: # if time to arrive less than changing to green light
             print(float(total_distance / 10))
             return float(total_distance / 10) - 0.5 # adjust speed
