@@ -8,9 +8,6 @@ from geometry_msgs.msg import Twist
 import cv2 as cv
 import numpy as np
 from sklearn.cluster import DBSCAN
-import time
-# from scipy.cluster.hierarchy import linkage, fcluster
-# from sklearn.cluster import KMeans
 
 # global variables
 vel_msg = Twist()
