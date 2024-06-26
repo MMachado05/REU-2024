@@ -9,7 +9,7 @@
 
   <!--ROBOTS-->
   <rosparam>
-    robot_list: ["robot1"]
+    robot_list: ["robot1", "robot2"]
   </rosparam>
   
   <!--Robot 1-->
@@ -41,8 +41,8 @@
     </node>
     <rosparam command="load" file="$(find figure_8_sim)/robot/ACTor.yaml" />
     <rosparam>
-        Xr_init: 20.60
-        Yr_init:  -0.83
+        Xr_init: 14.60
+        Yr_init:  -0.20
         Theta_init: deg(0.0)
     </rosparam>
   </group>
