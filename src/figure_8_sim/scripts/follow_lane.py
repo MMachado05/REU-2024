@@ -11,6 +11,8 @@ bridge = CvBridge()
 yellow_msg = Bool()
 angular_vel = Float64()
 
+cx = 0
+
 # lane following using computer vision
 # publishes angular velocity and intersection (yellow) detection
 
@@ -44,10 +46,15 @@ def image_callback(ros_image):
             max_area = area
             max_c = c
 
-    M = cv.moments(max_c)
-    cx,cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
-    cx -= 180
-    cv.circle(cv_image, (cx,cy), 10, (0,0,0), -1) # -1 fill the circle
+    try:
+        M = cv.moments(max_c)
+        cx,cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
+        cx -= 180
+        cv.circle(cv_image, (cx,cy), 10, (0,0,0), -1) # -1 fill the circle
+    except ZeroDivisionError or UnboundLocalError:
+        cx = 0
+        pass
+    # cv.circle(cv_image, (cx,cy), 10, (0,0,0), -1) # -1 fill the circle
     cv.imshow('Contours with centroid dot', cv_image)
     cv.waitKey(3)
     
