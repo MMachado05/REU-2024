@@ -1,5 +1,5 @@
 import math
-from lane_follow_blob.vec import Vec
+from lane_helpers.vec import Vec
 from numpy import ndarray
 from .utils import rows, cols, draw_point, deg2rad
 from typing import List
