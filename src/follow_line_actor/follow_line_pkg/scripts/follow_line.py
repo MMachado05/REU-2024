@@ -84,7 +84,7 @@ def drive_follow_line(cx, cy):
         linear_threshold1 = 50
         linear_threshold2 = 80
         if abs(cx - mid) < linear_threshold1:
-            vel_msg.linear.x = 5.0
+            vel_msg.linear.x = 2.0
         elif abs(cx - mid) < linear_threshold2:
             vel_msg.linear.x = 1.5 
         else:
