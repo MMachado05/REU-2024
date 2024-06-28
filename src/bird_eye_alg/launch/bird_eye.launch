@@ -1,0 +1,45 @@
+<launch>
+
+  <!-- ==================== -->
+  <!-- GazelleSim Arguments -->
+  <!-- ==================== -->
+  <arg name="show_dynamic_reconfigure" default="true" />
+
+
+  <!-- ========================= -->
+  <!-- Set simulation parameters -->
+  <!-- ========================= -->
+  <param name="map_dir" value="$(find bird_eye_alg)/map" />
+  <rosparam command="load"
+            file="$(find bird_eye_alg)/map/circleroad.yaml" />
+
+  <!-- ============= -->
+  <!-- Define robots -->
+  <!-- ============= -->
+  <rosparam>
+    robot_list: ["robot1"]
+  </rosparam>
+  
+  <!-- Define robot1 -->
+  <group ns="robot1">
+    <rosparam command="load"
+              file="$(find bird_eye_alg)/robot/ACTor.yaml" />
+    <rosparam>
+        Xr_init:  0.0
+        Yr_init:  0.0
+        Theta_init: deg(0.0)
+    </rosparam>
+    <node name="bird" type = "bird_eye.py" pkg="bird_eye_alg"  
+    required="true" output="screen" />
+  </group>
+
+
+  <!-- ================= -->
+  <!-- Launch GazelleSim -->
+  <!-- ================= -->
+  <include file="$(find gazelle_sim)/launch/gazelle_sim.launch">
+    <arg name="show_dynamic_reconfigure" value="$(arg show_dynamic_reconfigure)" />
+  </include>
+
+
+</launch>
