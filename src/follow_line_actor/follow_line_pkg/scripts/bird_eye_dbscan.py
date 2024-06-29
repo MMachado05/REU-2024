@@ -86,7 +86,7 @@ def compute_lines(rows, image):
                 slope = float('inf')
             else:
                 slope = (y2 - y1) / (x2 - x1)
-            if length < 100 and abs(slope) >= 0.4:
+            if length < 100 and abs(slope) >= 0.5:
                 extend_factor = 2.5
                 x1_extended = int(x1 - (x2 - x1) * (extend_factor - 1))
                 y1_extended = int(y1 - (y2 - y1) * (extend_factor - 1))
@@ -134,7 +134,7 @@ def compute_lines(rows, image):
 
     # conditions
     if len(largest_labels) == 0:
-        return None
+        return None, None, None, None
     
     # if only one cluster
     elif len(largest_labels) == 1:
@@ -145,14 +145,16 @@ def compute_lines(rows, image):
             cv.circle(image2, (int(p[1]), int(p[0])), 5, (0,255,0), 2)
         cv.imshow("Labeled points", image2)
         cv.waitKey(3) 
+        cy = rows // 2
         if centroid_x < (cols // 2):
             cx = (cols // 2 + 100)
+
             print(cx)
-            return cx
+            return cx, cy, cols, rows
         else:
             cx = (cols // 2 - 100)
             print(cx)
-            return cx
+            return cx, cy, cols, rows
 
     else:
         # if two clusters, find center of both
