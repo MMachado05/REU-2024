@@ -27,7 +27,7 @@ start_time2 = None
 
 # dynamic reconfigure
 def dyn_rcfg_cb(config, level):
-    global speed, drive, ly, uy, ls, lv, us, uv
+    global speed, drive, ly, uy, ls, lv, us, uv, white, bird1, bird2, eps
     speed = config.speed
     drive = config.enable_drive
     ly = config.lower_yellow
@@ -36,14 +36,18 @@ def dyn_rcfg_cb(config, level):
     lv = config.lv
     us = config.us
     uv = config.uv
+    white = config.white
+    bird1 = config.bird1
+    bird2 = config.bird2
+    eps = config.eps
     return config
 
 # compute lines and follow lane
 def compute_lines(image):
 
     # remove top of image
-    rows, cols, _ = image.shape
-    image = image[rows // 9: int(rows * 6/7), :]
+    rows1, cols1, _ = image.shape
+    image = image[int(rows1 / 2):, :]
 
     # get image shape
     rows, cols, _ = image.shape
@@ -51,8 +55,8 @@ def compute_lines(image):
     #birds eye view
     p1 = [0, 0]
     p2 = [cols//2, 0]
-    p3 = [cols//2 - int(cols * 0.15), rows]
-    p4 = [int(cols * 0.15), rows]
+    p3 = [cols//2 - int(cols * bird1), rows]
+    p4 = [int(cols * bird2), rows]
     
     per1 = np.float32([[0, 0], [cols, 0], [cols, rows], [0, rows]])
     per2 = np.float32([p1, p2, p3, p4])
@@ -66,13 +70,13 @@ def compute_lines(image):
 
     # mask white pixels
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    _, thresh = cv.threshold(gray, 170, 255, cv.THRESH_BINARY)
+    _, thresh = cv.threshold(gray, white, 255, cv.THRESH_BINARY)
 
     # canny filtering to get edges
     edges = cv.Canny(thresh, 50, 150, 3)
 
     # get list of lines
-    lines = cv.HoughLinesP(edges, 1, np.pi / 180, threshold=20, minLineLength=20, maxLineGap=10)
+    lines = cv.HoughLinesP(edges, 1, np.pi / 180, threshold=20, minLineLength=10, maxLineGap=5)
     
     # empty image to draw filtered lines
     line_image = np.zeros_like(image)
@@ -87,8 +91,8 @@ def compute_lines(image):
                 slope = float('inf')
             else:
                 slope = (y2 - y1) / (x2 - x1)
-            if length < 100 and abs(slope) >= 0.5:
-                extend_factor = 2.5
+            if length < 20 and abs(slope) >= 0.5:
+                extend_factor = 2
                 x1_extended = int(x1 - (x2 - x1) * (extend_factor - 1))
                 y1_extended = int(y1 - (y2 - y1) * (extend_factor - 1))
                 x2_extended = int(x2 + (x2 - x1) * (extend_factor - 1))
@@ -111,7 +115,7 @@ def compute_lines(image):
     points = points[::downsample_factor]
 
     # find clusters using dbscan density based clustering
-    dbscan = DBSCAN(eps=50, min_samples=3)
+    dbscan = DBSCAN(eps=eps, min_samples=3)
     clusters = dbscan.fit_predict(points)
 
     # get the two clusters closest to bottom with certain minimum size
@@ -230,7 +234,7 @@ def image_callback(ros_image):
 
     # get turn angle
     mid_x = cols // 2
-    angle = float(math.degrees(math.atan2(abs(mid_x - cx), abs(rows - cy)))) 
+    angle = float(math.degrees(math.atan2(abs(mid_x - cx), abs(rows - cy))) / 2) 
 
     # compute linear and angular speed
     target_speed = speed #mph
