@@ -8,7 +8,7 @@
         <param name="source" type="string" value="$(arg source)" />
     </node> -->
 
-    <node name="bird_eye_dbscan" pkg="follow_line_pkg" type="bird_eye_dbscan.py" required="true" output="screen">
+    <node name="birds_eye_dbscan" pkg="follow_line_pkg" type="bird_eye_dbscan.py" required="true" output="screen">
         <param name="imgtopic_name" type="str" value="/cam_pub/image_raw" />   
     </node>
     <group if="$(arg show_dynamic_reconfigure)">
