@@ -55,6 +55,11 @@ class ROSImagePreprocessor:
     # ------- Internal state-related functions -------
     # ------------------------------------------------
     def __init__(self):
+        """
+        Initializes an image-preprocessing node.
+
+        Sets up subscribers, publishers, and dynamic reconfigure.
+        """
         # Node architecture
         rospy.init_node("line_detection_preprocessor", anonymous=True)
         self.raw_img_subscriber = rospy.Subscriber(
@@ -102,6 +107,9 @@ class ROSImagePreprocessor:
         rospy.spin()
 
     def _dynamic_reconfig_callback(self, config, _):
+        """
+        Callback function for dynamic reconfigure.
+        """
         self.initial_crop_top = config.initial_crop_top / 100
         self.initial_crop_bottom = config.initial_crop_bottom / 100
         self.initial_crop_left = config.initial_crop_left / 100
@@ -140,7 +148,10 @@ class ROSImagePreprocessor:
     # -----------------------------------------------------
     # ----------- Image Preprocessing functions -----------
     # -----------------------------------------------------
-    def _preprocess_image(self, ros_image: Image):
+    def _preprocess_image(self, ros_image: Image) -> None:
+        """
+        Preprocess image based on dynamic reconfigure settings.
+        """
         # Convert ROS image to OpenCV image
         try:
             cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(ros_image, "bgr8")
