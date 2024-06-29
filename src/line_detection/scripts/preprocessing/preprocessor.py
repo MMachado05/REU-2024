@@ -79,7 +79,7 @@ class ROSImagePreprocessor:
         self.use_live_crop = False
         self.live_crop_weight = 0.5
 
-        self.display_preprocessed_image = True
+        self.display_preprocessed_image = False
 
         # Misc.
         self.rosimg_to_cv_bridge = CvBridge()
