@@ -27,7 +27,7 @@ start_time2 = None
 
 # dynamic reconfigure
 def dyn_rcfg_cb(config, level):
-    global speed, drive, ly, uy, ls, lv, us, uv, white, bird1, bird2, eps
+    global speed, drive, ly, uy, ls, lv, us, uv, white, bird1, eps
     speed = config.speed
     drive = config.enable_drive
     ly = config.lower_yellow
@@ -38,7 +38,6 @@ def dyn_rcfg_cb(config, level):
     uv = config.uv
     white = config.white
     bird1 = config.bird1
-    bird2 = config.bird2
     eps = config.eps
     return config
 
@@ -56,7 +55,7 @@ def compute_lines(image):
     p1 = [0, 0]
     p2 = [cols//2, 0]
     p3 = [cols//2 - int(cols * bird1), rows]
-    p4 = [int(cols * bird2), rows]
+    p4 = [int(cols * bird1), rows]
     
     per1 = np.float32([[0, 0], [cols, 0], [cols, rows], [0, rows]])
     per2 = np.float32([p1, p2, p3, p4])
