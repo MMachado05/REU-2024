@@ -24,6 +24,12 @@ class ROSImagePreprocessor:
     initial_crop_top: float
     initial_crop_bottom: float
 
+    use_poly_mask: bool
+    poly_top_left: float
+    poly_top_right: float
+    poly_bottom_left: float
+    poly_bottom_right: float
+
     use_median_blur: bool
 
     filter_white: bool
@@ -40,10 +46,10 @@ class ROSImagePreprocessor:
 
     raw_img_subscriber: rospy.Subscriber
     processed_img_publisher: rospy.Publisher
-    srv: Server
+    dyn_rcfg_srv: Server
     # TODO: Add required live cropping subscriber
 
-    rosimg_to_cv_bridge: CvBridge
+    rosimg_cv_bridge: CvBridge
 
     # ------------------------------------------------
     # ------- Internal state-related functions -------
@@ -52,18 +58,26 @@ class ROSImagePreprocessor:
         # Node architecture
         rospy.init_node("line_detection_preprocessor", anonymous=True)
         self.raw_img_subscriber = rospy.Subscriber(
-            rospy.get_param("~img_in_topic"), Image, self.preprocess_image
+            rospy.get_param("~img_in_topic"), Image, self._preprocess_image
         )
         self.processed_img_publisher = rospy.Publisher(
             rospy.get_param("~img_out_topic"), Image, queue_size=1
         )
-        self.srv = Server(PreprocessorConfig, self.dynamic_reconfig_callback)
+        self.dyn_rcfg_srv = Server(PreprocessorConfig, self._dynamic_reconfig_callback)
 
         # Initially-set preprocessing parameters
+        # TODO: I could probably set this to have 6 different points to allow default
+        #   filtering of non-lane information
         self.initial_crop_top = 0.5
         self.initial_crop_bottom = 1.0
         self.initial_crop_left = 0.0
         self.initial_crop_right = 1.0  # Crop out the top half of the image
+
+        self.use_poly_mask = False
+        self.poly_top_left = 0.0
+        self.poly_top_right = 1.0
+        self.poly_bottom_left = 1.0
+        self.poly_bottom_right = 1.0
 
         # TODO: Add live cropping
 
@@ -82,16 +96,30 @@ class ROSImagePreprocessor:
         self.display_preprocessed_image = False
 
         # Misc.
-        self.rosimg_to_cv_bridge = CvBridge()
+        self.rosimg_cv_bridge = CvBridge()
 
         # Begin preprocessing
         rospy.spin()
 
-    def dynamic_reconfig_callback(self, config, _):
+    def _dynamic_reconfig_callback(self, config, _):
         self.initial_crop_top = config.initial_crop_top / 100
         self.initial_crop_bottom = config.initial_crop_bottom / 100
         self.initial_crop_left = config.initial_crop_left / 100
         self.initial_crop_right = config.initial_crop_right / 100
+
+        self.use_poly_mask = config.use_poly_mask
+        self.poly_top_left = (
+            config.top_left / 100
+            if config.top_left < config.top_right
+            else config.top_right / 100
+        )
+        self.poly_top_right = (
+            config.top_right / 100
+            if config.top_right > config.top_left
+            else config.top_left / 100
+        )  # Don't allow left to go further than right, and vise versa
+        self.poly_bottom_left = config.bottom_left / 100
+        self.poly_bottom_right = config.bottom_right / 100
 
         self.use_median_blur = config.use_median_blur
 
@@ -112,10 +140,10 @@ class ROSImagePreprocessor:
     # -----------------------------------------------------
     # ----------- Image Preprocessing functions -----------
     # -----------------------------------------------------
-    def preprocess_image(self, ros_image: Image):
+    def _preprocess_image(self, ros_image: Image):
         # Convert ROS image to OpenCV image
         try:
-            cv_image = self.rosimg_to_cv_bridge.imgmsg_to_cv2(ros_image, "bgr8")
+            cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(ros_image, "bgr8")
         except CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
             return
@@ -127,6 +155,21 @@ class ROSImagePreprocessor:
             int(cols * self.initial_crop_left) : int(cols * self.initial_crop_right),
         ]
         rows, cols, _ = cv_image.shape
+
+        # Add poly mask
+        if self.use_poly_mask:
+            height, width = rows, cols
+            mask = np.zeros((rows, cols), dtype="uint8")
+            roi_points = [
+                (int(width * self.poly_top_left), 0),
+                (0, int(height * self.poly_bottom_left)),
+                (0, height),
+                (width, height),
+                (width, int(height * self.poly_bottom_right)),
+                (int(width * self.poly_top_right), 0),
+            ]
+            cv.fillPoly(mask, [np.array(roi_points)], (255, 255, 255))
+            cv_image = cv.bitwise_and(cv_image, cv_image, mask=mask)
 
         # TODO: Add live cropping
 
@@ -151,11 +194,14 @@ class ROSImagePreprocessor:
 
         try:
             self.processed_img_publisher.publish(
-                self.rosimg_to_cv_bridge.cv2_to_imgmsg(cv_image)
+                self.rosimg_cv_bridge.cv2_to_imgmsg(cv_image)
             )
         except CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
 
 
 if __name__ == "__main__":
-    preprocessor = ROSImagePreprocessor()
+    try:
+        ROSImagePreprocessor()
+    except rospy.ROSInterruptException:
+        pass
