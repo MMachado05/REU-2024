@@ -39,9 +39,10 @@ def dyn_rcfg_cb(config, level):
     return config
 
 # compute lines and follow lane
-def compute_lines(rows, image):
+def compute_lines(image):
 
     # remove top of image
+    rows, cols, _ = image.shape
     image = image[rows // 9: int(rows * 6/7), :]
 
     # get image shape
@@ -201,14 +202,14 @@ def image_callback(ros_image):
         rospy.logerr(f"CvBridge Error: {e}")
         return
 
-    rows, cols, _ = cv_image.shape
+    rows1, cols1, _ = cv_image.shape
     image = cv_image.copy()
 
     # compute lines and obtain ideal image center
-    cx, cy, cols, rows = compute_lines(rows, image)
+    cx, cy, cols, rows = compute_lines(image)
 
     image2 = cv_image.copy()
-    image2 = image2[int(rows*3/5):int(rows*4/5), int(cols * 1 / 3): int(cols * 2/3)]
+    image2 = image2[int(rows1*3/5):int(rows1*4/5), int(cols1 * 1 / 3): int(cols1 * 2/3)]
     rows2, cols2, _ = image2.shape
     # yellow mask
     hsv = cv.cvtColor(image2,cv.COLOR_BGR2HSV)
