@@ -30,12 +30,10 @@ crop2 = 0
 start_time = None
 start_time2 = None
 
-
-
 # dynamic reconfigure
 def dyn_rcfg_cb(config, level):
-  global thresh, speed, drive, ly, uy, ls, lv, us, uv
-  thresh = config.thresh
+  global thresh1, speed, drive, ly, uy, ls, lv, us, uv
+  thresh1 = config.thresh
   speed = config.speed
   drive = config.enable_drive
   ly = config.lower_yellow
@@ -48,7 +46,7 @@ def dyn_rcfg_cb(config, level):
 
 # compute lines and follow lane
 def compute_lines(rows, cols, image, crop1, crop2):
-
+    global thresh1
 
     # add median blur to emphasize white lines 
     image = cv.medianBlur(image, 5)
@@ -60,7 +58,7 @@ def compute_lines(rows, cols, image, crop1, crop2):
 
     # mask white pixels
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    _, thresh = cv.threshold(gray, 190, 255, cv.THRESH_BINARY)
+    _, thresh = cv.threshold(gray, thresh1, 255, cv.THRESH_BINARY)
 
     # canny filtering to get edges
     edges = cv.Canny(thresh, 50, 150, 3)
@@ -75,16 +73,6 @@ def compute_lines(rows, cols, image, crop1, crop2):
     if lines is not None:
         for line in lines:
 
-            # x1, y1, x2, y2 = line[0]
-            # dx = x2 - x1
-            # dy = y2 - y1
-            # if dx == 0: 
-            #     slope = float('inf')
-            # else:
-            #     slope = dy / dx
-
-            # if abs(slope) >= 0.4:
-            #     cv.line(line_image, (x1, y1), (x2, y2), (255, 255, 255), 2)
             x1, y1, x2, y2 = line[0]
             
             # Calculate length of the line segment
@@ -97,7 +85,7 @@ def compute_lines(rows, cols, image, crop1, crop2):
                 slope = (y2 - y1) / (x2 - x1)
             
             # Extend the line if its length is shorter than 40 pixels and slope is >= 0.4 or <= -0.4
-            if length < 100: # 50, 0.5
+            if length < 100 and abs(slope) >= 0.5: # 50, 0.5
                 # Extend the line by a factor of 1.5 times its original length
                 extend_factor = 3 # 2
                 x1_extended = int(x1 - (x2 - x1) * (extend_factor - 1))
@@ -106,7 +94,7 @@ def compute_lines(rows, cols, image, crop1, crop2):
                 y2_extended = int(y2 + (y2 - y1) * (extend_factor - 1))
                 
                 cv.line(line_image, (x1_extended, y1_extended), (x2_extended, y2_extended), (255, 255, 255), 2)
-            elif abs(slope) >= 2.5:
+            elif abs(slope) >= 0.5:
                 cv.line(line_image, (x1, y1), (x2, y2), (255, 255, 255), 2)
 
     # make lines thicker
@@ -131,52 +119,85 @@ def compute_lines(rows, cols, image, crop1, crop2):
     dbscan = DBSCAN(eps=70, min_samples=3) # 100
     clusters = dbscan.fit_predict(points)
 
-    # get the two largest clusters 
+    # get the two clusters closest to bottom with certain minimum size
     unique_labels, counts = np.unique(clusters, return_counts=True)
-    sorted_clusters = sorted(list(zip(unique_labels, counts)), key=lambda x: -x[1])
+    valid_clusters = []
+
+    for label in unique_labels:
+        if label == -1:  
+            continue
+
+        cluster_points = points[clusters == label]
+
+        if len(cluster_points) >= 10:
+            centroid_y = np.max(cluster_points[:, 0])
+            valid_clusters.append((label, centroid_y))
+
+    sorted_clusters = sorted(valid_clusters, key=lambda x: x[1], reverse=True)[:2]
     largest_labels = [sorted_clusters[i][0] for i in range(min(2, len(sorted_clusters)))]
     colors = [(0, 255, 0), (0, 0, 255)]
     label_to_color = {label: colors[i] for i, label in enumerate(largest_labels)}
 
-    if len(unique_labels) < 2:
-        print("a")
-        return None, 0
+    # conditions
+    if len(largest_labels) == 0:
+        return None, None, None, None
     
-    lane_centroids = []
-    # for each cluster fit a 2nd degree polynomial 
-    for label in largest_labels:
+    # if only one cluster
+    elif len(largest_labels) == 1:
+        lane_points = points[clusters == largest_labels[0]]
+        centroid_x = lane_points[np.argmax(lane_points[:, 0])][1]
+        image2 = image.copy()
+        for p in lane_points:
+            cv.circle(image2, (int(p[1]), int(p[0])), 5, (0,255,0), 2)
+        cv.imshow("Labeled points", image2)
+        cv.waitKey(3) 
+        cy = rows // 2
+        if centroid_x < (cols // 2):
+            cx = (cols // 2 + 100)
 
-        lane_points = points[clusters == label]
-        lane_points = lane_points[np.argsort(lane_points[:, 1])]
+            print(cx)
+            return cx, cy, cols, rows
+        else:
+            cx = (cols // 2 - 100)
+            print(cx)
+            return cx, cy, cols, rows
 
-        coefficients = np.polyfit(lane_points[:, 0], lane_points[:, 1], deg=2)
-        polynomial = np.poly1d(coefficients)
-
-        x_values = np.linspace(0, cols, num=100)
-        y_values = polynomial(x_values).astype(int)
-        # for p in lane_points:
-        #     cv.circle(image, (int(p[1]), int(p[0])), 5, label_to_color[label], -1)
-        for i in range(len(y_values) - 1):
-            cv.line(image, (int(y_values[i]), int(x_values[i])), 
-                    (int(y_values[i+1]), int(x_values[i+1])), label_to_color[label], 5)
-        
-        centroid_x = np.mean(lane_points[:, 1]) 
-        lane_centroids.append(centroid_x)
-
-    # get cx from the average of the two clusters' centroids
-    if len(lane_centroids) == 2:
-        cx = int(np.mean(lane_centroids))
-        cv.circle(image, (cols // 2, rows // 2), 5, (0, 0, 0), -1)
-        cv.arrowedLine(image, (cols // 2, rows // 2), (cx, rows // 2), (255, 255, 255), 3)
     else:
-        cx = cols // 2 
+        # if two clusters, find center of both
+        lane_centroids_x = []
+        lane_centroids_y = []
+        image2 = image.copy()
+        for label in largest_labels:
 
-    # display image with lanes
-    cv.imshow("White Points", image)
-    cv.waitKey(3)
+            lane_points = points[clusters == label]
+            lane_points = lane_points[np.argsort(lane_points[:, 1])]
 
-    
-    return cx, (cx - (cols // 2))
+            coefficients = np.polyfit(lane_points[:, 0], lane_points[:, 1], deg=2)
+            polynomial = np.poly1d(coefficients)
+
+            x_values = np.linspace(0, cols, num=100)
+            y_values = polynomial(x_values).astype(int)
+            
+            for p in lane_points:
+                cv.circle(image2, (int(p[1]), int(p[0])), 5, label_to_color[label], 2)
+            for i in range(len(y_values) - 1):
+                cv.line(image, (int(y_values[i]), int(x_values[i])), 
+                        (int(y_values[i+1]), int(x_values[i+1])), label_to_color[label], 5)
+            
+            centroid_x = np.mean(lane_points[:, 1]) 
+            centroid_y = np.mean(lane_points[:, 0]) 
+            lane_centroids_x.append(centroid_x)
+            lane_centroids_y.append(centroid_y)
+
+        # get cx from the average of the two clusters' centroids
+        cx = int(np.mean(lane_centroids_x))
+        cy = int(np.mean(lane_centroids_y))
+
+    cv.arrowedLine(image, (cols//2,rows-1), (cx,cy), (255, 255, 255), 2)
+    cv.imshow("Polynomial lanes", image)
+    cv.imshow("Labeled points", image2)
+    cv.waitKey(3) 
+    return cx, cy, cols, rows
 
 
 def image_callback(ros_image):
@@ -192,10 +213,10 @@ def image_callback(ros_image):
     cv_image = cv_image[int(rows1 /2):,:]
     rows, cols, _ = cv_image.shape
 
-    mymask = np.zeros((rows, cols), dtype="uint8")
-    myROI = [(cols // 2, 0), (0,(rows // 4)),(0,rows),(cols, rows), (cols, (rows //4)), (cols, 0)]
-    cv.fillPoly(mymask, [np.array(myROI)], 255)
-    cv_image = cv.bitwise_and(cv_image, cv_image, mask = mymask)
+    # mymask = np.zeros((rows, cols), dtype="uint8")
+    # myROI = [(cols // 2, 0), (0,(rows // 4)),(0,rows),(cols, rows), (cols, (rows //4)), (cols, 0)]
+    # cv.fillPoly(mymask, [np.array(myROI)], 255)
+    # cv_image = cv.bitwise_and(cv_image, cv_image, mask = mymask)
 
     image = cv_image.copy()
 
@@ -217,15 +238,17 @@ def image_callback(ros_image):
     cv.waitKey(3)    
 
     # compute lines and obtain cx
-    cx, gap = compute_lines(rows, cols, image, crop1, crop2)
-    if gap < 0:
-        crop2 = gap +120
-        crop1 = 0
-    else:
-        crop1 = gap+120
-        crop2 = 0
+    cx, cy, cols, rows = compute_lines(rows, cols, image, crop1, crop2)
+    # if cx < 0:
+    #     crop2 = abs(cx) +120
+    #     crop1 = 0
+    # else:
+    #     crop1 = abs(cx)+120
+    #     crop2 = 0
 
-    angle = float(math.degrees(abs(gap)/(rows//2)) /2)
+    mid_x = cols // 2
+    angle = float(math.degrees(math.atan2(abs(mid_x - cx), abs(rows - cy))) / 2) 
+    #angle = float(math.degrees(abs(gap)/(rows//2)) /2)
     target_speed = speed #mph
     
 

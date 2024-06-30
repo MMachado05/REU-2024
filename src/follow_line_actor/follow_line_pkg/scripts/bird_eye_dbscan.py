@@ -43,10 +43,9 @@ def dyn_rcfg_cb(config, level):
 
 # compute lines and follow lane
 def compute_lines(image):
-
     # remove top of image
     rows1, cols1, _ = image.shape
-    image = image[int(rows1 / 2):, :]
+    image = image[int(rows1 /2):, :]
 
     # get image shape
     rows, cols, _ = image.shape
@@ -90,7 +89,7 @@ def compute_lines(image):
                 slope = float('inf')
             else:
                 slope = (y2 - y1) / (x2 - x1)
-            if length < 20 and abs(slope) >= 0.5:
+            if length < 50 and abs(slope) >= 0.5:
                 extend_factor = 2
                 x1_extended = int(x1 - (x2 - x1) * (extend_factor - 1))
                 y1_extended = int(y1 - (y2 - y1) * (extend_factor - 1))
@@ -233,7 +232,7 @@ def image_callback(ros_image):
 
     # get turn angle
     mid_x = cols // 2
-    angle = float(math.degrees(math.atan2(abs(mid_x - cx), abs(rows - cy))) / 2) 
+    angle = float(math.degrees(math.atan2(abs(mid_x - cx), abs(rows - cy)))) 
 
     # compute linear and angular speed
     target_speed = speed #mph
