@@ -60,7 +60,7 @@ def compute_lines(rows, cols, image, crop1, crop2):
 
     # mask white pixels
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    _, thresh = cv.threshold(gray, 210, 255, cv.THRESH_BINARY)
+    _, thresh = cv.threshold(gray, 190, 255, cv.THRESH_BINARY)
 
     # canny filtering to get edges
     edges = cv.Canny(thresh, 50, 150, 3)
@@ -97,16 +97,16 @@ def compute_lines(rows, cols, image, crop1, crop2):
                 slope = (y2 - y1) / (x2 - x1)
             
             # Extend the line if its length is shorter than 40 pixels and slope is >= 0.4 or <= -0.4
-            if length < 50 and abs(slope) >= 0.5:
+            if length < 100: # 50, 0.5
                 # Extend the line by a factor of 1.5 times its original length
-                extend_factor = 2
+                extend_factor = 3 # 2
                 x1_extended = int(x1 - (x2 - x1) * (extend_factor - 1))
                 y1_extended = int(y1 - (y2 - y1) * (extend_factor - 1))
                 x2_extended = int(x2 + (x2 - x1) * (extend_factor - 1))
                 y2_extended = int(y2 + (y2 - y1) * (extend_factor - 1))
                 
                 cv.line(line_image, (x1_extended, y1_extended), (x2_extended, y2_extended), (255, 255, 255), 2)
-            elif abs(slope) >= 0.4:
+            elif abs(slope) >= 2.5:
                 cv.line(line_image, (x1, y1), (x2, y2), (255, 255, 255), 2)
 
     # make lines thicker
@@ -128,7 +128,7 @@ def compute_lines(rows, cols, image, crop1, crop2):
     points = points[::downsample_factor]
 
     # perform density based clustering
-    dbscan = DBSCAN(eps=100, min_samples=3)
+    dbscan = DBSCAN(eps=70, min_samples=3) # 100
     clusters = dbscan.fit_predict(points)
 
     # get the two largest clusters 
@@ -189,7 +189,7 @@ def image_callback(ros_image):
     image2 = cv_image.copy()
     # remove top of image
     rows1, cols1, _ = cv_image.shape
-    cv_image = cv_image[rows1 // 2:,:]
+    cv_image = cv_image[int(rows1 /2):,:]
     rows, cols, _ = cv_image.shape
 
     mymask = np.zeros((rows, cols), dtype="uint8")
@@ -219,13 +219,13 @@ def image_callback(ros_image):
     # compute lines and obtain cx
     cx, gap = compute_lines(rows, cols, image, crop1, crop2)
     if gap < 0:
-        crop2 = -gap
+        crop2 = gap +120
         crop1 = 0
     else:
-        crop1 = gap
+        crop1 = gap+120
         crop2 = 0
 
-    angle = float(math.degrees(abs(gap)/(rows//2)) / 2)
+    angle = float(math.degrees(abs(gap)/(rows//2)) /2)
     target_speed = speed #mph
     
 
@@ -238,7 +238,7 @@ def image_callback(ros_image):
                     publish_ulc_speed(speed)
                 else:
                     start_time2 = None
-            elif yellow_pct > 5 and start_time == None:
+            elif yellow_pct > 2 and start_time == None:
                 start_time = time.time()
             elif start_time is not None:
                 current_time = time.time()
