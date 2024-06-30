@@ -30,6 +30,16 @@ class ROSImagePreprocessor:
     poly_bottom_left: float
     poly_bottom_right: float
 
+    use_warp_perspective: bool
+    warp_topleft_x: float
+    warp_topleft_y: float
+    warp_bottomleft_x: float
+    warp_bottomleft_y: float
+    warp_topright_x: float
+    warp_topright_y: float
+    warp_bottomright_x: float
+    warp_bottomright_y: float
+
     use_median_blur: bool
 
     filter_white: bool
@@ -65,18 +75,27 @@ class ROSImagePreprocessor:
         self.raw_img_subscriber = rospy.Subscriber(
             rospy.get_param("~img_in_topic"), Image, self._preprocess_image
         )
+        # TODO: Add a subcscriber for live cropping
         self.processed_img_publisher = rospy.Publisher(
             rospy.get_param("~img_out_topic"), Image, queue_size=1
         )
         self.dyn_rcfg_srv = Server(PreprocessorConfig, self._dynamic_reconfig_callback)
 
         # Initially-set preprocessing parameters
-        # TODO: I could probably set this to have 6 different points to allow default
-        #   filtering of non-lane information
         self.initial_crop_top = 0.5
         self.initial_crop_bottom = 1.0
         self.initial_crop_left = 0.0
         self.initial_crop_right = 1.0  # Crop out the top half of the image
+
+        self.use_warp_perspective = False
+        self.warp_topleft_x = 0.0
+        self.warp_topleft_y = 0.0
+        self.warp_bottomleft_x = 0.0
+        self.warp_bottomleft_y = 1.0
+        self.warp_topright_x = 1.0
+        self.warp_topright_y = 0.0
+        self.warp_bottomright_x = 1.0
+        self.warp_bottomright_y = 1.0
 
         self.use_poly_mask = False
         self.poly_top_left = 0.0
@@ -109,11 +128,26 @@ class ROSImagePreprocessor:
     def _dynamic_reconfig_callback(self, config, _):
         """
         Callback function for dynamic reconfigure.
+
+        Parameters
+        ----------
+        config: PreprocessorConfig
+            Configuration for preprocessing.
         """
         self.initial_crop_top = config.initial_crop_top / 100
         self.initial_crop_bottom = config.initial_crop_bottom / 100
         self.initial_crop_left = config.initial_crop_left / 100
         self.initial_crop_right = config.initial_crop_right / 100
+
+        self.use_warp_perspective = config.use_warp_perspective
+        self.warp_topleft_x = config.topleft_x / 100
+        self.warp_topleft_y = config.topleft_y / 100
+        self.warp_bottomleft_x = config.bottomleft_x / 100
+        self.warp_bottomleft_y = config.bottomleft_y / 100
+        self.warp_topright_x = config.topright_x / 100
+        self.warp_topright_y = config.topright_y / 100
+        self.warp_bottomright_x = config.bottomright_x / 100
+        self.warp_bottomright_y = config.bottomright_y / 100
 
         self.use_poly_mask = config.use_poly_mask
         self.poly_top_left = (
@@ -151,6 +185,11 @@ class ROSImagePreprocessor:
     def _preprocess_image(self, ros_image: Image) -> None:
         """
         Preprocess image based on dynamic reconfigure settings.
+
+        Parameters
+        ----------
+        ros_image: Image
+            ROS image to be preprocessed.
         """
         # Convert ROS image to OpenCV image
         try:
@@ -167,8 +206,36 @@ class ROSImagePreprocessor:
         ]
         rows, cols, _ = cv_image.shape
 
+        # Perspective warping
+        if self.use_warp_perspective:
+            topleft = [int(cols * self.warp_topleft_x), int(rows * self.warp_topleft_y)]
+            topright = [
+                int(cols * self.warp_topright_x),
+                int(rows * self.warp_topright_y),
+            ]
+            bottomleft = [
+                int(cols * self.warp_bottomleft_x),
+                int(rows * self.warp_bottomleft_y),
+            ]
+            bottomright = [
+                int(cols * self.warp_bottomright_x),
+                int(rows * self.warp_bottomright_y),
+            ]
+
+            perspective_1 = np.array(
+                [[0, 0], [cols, 0], [cols, rows], [0, rows]], dtype=np.float32
+            )
+            perspective_2 = np.array(
+                [topleft, topright, bottomright, bottomleft], dtype=np.float32
+            )
+
+            matrix = cv.getPerspectiveTransform(perspective_1, perspective_2)
+            cv_image = cv.warpPerspective(cv_image, matrix, (cols, rows))
+
         # Add poly mask
         if self.use_poly_mask:
+            # NOTE: I have no idea if this works with perspective warping enabled, but I don't
+            #   think they should be used together, anyways
             height, width = rows, cols
             mask = np.zeros((rows, cols), dtype="uint8")
             roi_points = [
