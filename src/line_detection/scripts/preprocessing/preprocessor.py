@@ -128,6 +128,11 @@ class ROSImagePreprocessor:
     def _dynamic_reconfig_callback(self, config, _):
         """
         Callback function for dynamic reconfigure.
+
+        Parameters
+        ----------
+        config: PreprocessorConfig
+            Configuration for preprocessing.
         """
         self.initial_crop_top = config.initial_crop_top / 100
         self.initial_crop_bottom = config.initial_crop_bottom / 100
@@ -180,6 +185,11 @@ class ROSImagePreprocessor:
     def _preprocess_image(self, ros_image: Image) -> None:
         """
         Preprocess image based on dynamic reconfigure settings.
+
+        Parameters
+        ----------
+        ros_image: Image
+            ROS image to be preprocessed.
         """
         # Convert ROS image to OpenCV image
         try:
