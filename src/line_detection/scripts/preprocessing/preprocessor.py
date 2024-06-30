@@ -209,12 +209,25 @@ class ROSImagePreprocessor:
         # Perspective warping
         if self.use_warp_perspective:
             topleft = [int(cols * self.warp_topleft_x), int(rows * self.warp_topleft_y)]
-            topright = [int(cols * self.warp_topright_x), int(rows * self.warp_topright_y)]
-            bottomleft = [int(cols * self.warp_bottomleft_x), int(rows * self.warp_bottomleft_y)]
-            bottomright = [int(cols * self.warp_bottomright_x), int(rows * self.warp_bottomright_y)]
+            topright = [
+                int(cols * self.warp_topright_x),
+                int(rows * self.warp_topright_y),
+            ]
+            bottomleft = [
+                int(cols * self.warp_bottomleft_x),
+                int(rows * self.warp_bottomleft_y),
+            ]
+            bottomright = [
+                int(cols * self.warp_bottomright_x),
+                int(rows * self.warp_bottomright_y),
+            ]
 
-            perspective_1 = np.array([[0, 0], [cols, 0], [cols, rows], [0, rows]], dtype=np.float32)
-            perspective_2 = np.array([topleft, topright, bottomright, bottomleft], dtype=np.float32)
+            perspective_1 = np.array(
+                [[0, 0], [cols, 0], [cols, rows], [0, rows]], dtype=np.float32
+            )
+            perspective_2 = np.array(
+                [topleft, topright, bottomright, bottomleft], dtype=np.float32
+            )
 
             matrix = cv.getPerspectiveTransform(perspective_1, perspective_2)
             cv_image = cv.warpPerspective(cv_image, matrix, (cols, rows))
