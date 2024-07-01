@@ -1,0 +1,8 @@
+<launch>
+    <arg name="source" default="" />
+
+    <!-- launch the node -->
+    <node name="cam_pub" pkg="simple_camera_publisher" type="cam_pub" respawn="true" respawn_delay="10" output="screen">
+        <param name="source" type="string" value="$(arg source)" />
+    </node>
+</launch>
