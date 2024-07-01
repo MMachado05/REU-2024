@@ -47,6 +47,7 @@ lane = None
 waypoints = None
 intersections = None
 direction = 0
+angle = 0
 
 class Break(Exception): pass
 
@@ -256,9 +257,9 @@ if __name__ == '__main__':
     # angular_vel_sub = rospy.Subscriber("angular_vel", Float64, angular_vel_cb, queue_size=1)
     # velocity_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
-    light_ns = 'north' # rospy.get_param("~light_ns")
-    time_to_state_sub = rospy.Subscriber('/north/time_to_state', Time, time_to_state_cb, queue_size=1)
-    state_sub = rospy.Subscriber('/north/state', Bool, state_cb,queue_size=1)
+    light_ns = rospy.get_param("~light_ns")
+    time_to_state_sub = rospy.Subscriber('/' + light_ns + '/time_to_state', Time, time_to_state_cb, queue_size=1)
+    state_sub = rospy.Subscriber('/' + light_ns + '/state', Bool, state_cb,queue_size=1)
     yellow_sub = rospy.Subscriber('yellow', Bool, yellow_cb, queue_size=1)
     angle_sub = rospy.Subscriber('angle', Float64, angle_cb, queue_size=1)
     velocity_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)

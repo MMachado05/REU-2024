@@ -1,16 +1,18 @@
 <launch>
-    <!-- Lane Following -->
-    <!-- <include file="$(find follow_line_pkg)/launch/advanced_dbw_follow_lane.launch" ></launch> -->
-
-    <!-- Actor 2-->
-    <group ns="actor2">
-        <!-- Params -->
-        
-        <include file="$(find follow_line_pkg)/launch/advanced_dbw_follow_lane.launch" ></launch>
-        <param name="light_ns" type="str" value="north" />
+    <!-- Actor 1-->
+    <group ns="actor1">
+        <include file="$(find follow_line_pkg)/launch/advanced_dbw_follow_lane.launch" >
         <node name="vc_node" pkg="vehicle_pkg" type="vc.py" required="true" output="screen">
+            <param name="light_ns" type="string" value="north" />
         </node>
     </group>
 
+    <!-- Actor 2-->
+    <group ns="actor2">
+        <include file="$(find follow_line_pkg)/launch/advanced_dbw_follow_lane.launch" />
+        <node name="vc_node" pkg="vehicle_pkg" type="vc.py" required="true" output="screen">
+            <param name="light_ns" type="string" value="south" />
+        </node>
+    </group>
 
 </launch>
