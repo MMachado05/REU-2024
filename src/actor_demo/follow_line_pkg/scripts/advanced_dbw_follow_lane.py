@@ -291,11 +291,11 @@ def image_callback(ros_image):
 
         angular_threshold = 20
         if mid < cx - angular_threshold:
-            pub_angle(-angle)
+            pub_angle.publish(-angle)
         elif mid > cx + angular_threshold:
-            pub_angle(angle)
+            pub_angle.publish(angle)
         else:
-            pub_angle(0)
+            pub_angle.publish(0.0)
     # enable_dbw()
     
 # def publish_ulc_speed(speed: float) -> None:
@@ -361,7 +361,10 @@ def image_callback(ros_image):
 
 # main method
 if __name__ == '__main__':
-    rospy.init_node('advanced__dbw_follow_lane', anonymous=True) # initialize node
+    rospy.init_node('advanced_dbw_follow_lane', anonymous=True) # initialize node
+    
+    print('running follow lane node')
+    
     imgtopic = rospy.get_param("~imgtopic_name") # private name
     rospy.Subscriber(imgtopic, Image, image_callback) # subscribe to image (so that image_callback can be called every time an image is published)
     pub_ulc = rospy.Publisher("/vehicle/ulc_cmd", UlcCmd, queue_size=1)

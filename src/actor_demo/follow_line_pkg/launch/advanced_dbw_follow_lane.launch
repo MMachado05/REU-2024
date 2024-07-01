@@ -9,7 +9,7 @@
     </node> -->
 
     <node name="advanced_dbw_follow_lane" pkg="follow_line_pkg" type="advanced_dbw_follow_lane.py" required="true" output="screen">
-        <param name="imgtopic_name" type="str" value="/cam_pub/image_raw" />   
+        <param name="imgtopic_name" type="str" value="cam_pub/image_raw" />   
     </node>
     <group if="$(arg show_dynamic_reconfigure)">
     	<node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_console" args="-t"/>

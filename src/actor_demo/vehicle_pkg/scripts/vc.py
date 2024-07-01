@@ -47,7 +47,7 @@ lane = None
 waypoints = None
 intersections = None
 direction = 0
-angle = 0
+angle = 0.0
 
 class Break(Exception): pass
 
@@ -96,6 +96,7 @@ def time_to_state_cb(msg):
 def yellow_cb(y):
     global yellow
     yellow = y.data
+    motion()
 
 # angular speed callback
 def angle_cb(ang):
@@ -153,7 +154,7 @@ def compute_speed_to_intersection():
 
 # make vehicle move
 def motion():
-    global vel, angular_vel, yellow, stop, check, start_time, current_time, start_time2
+    global vel, angular_vel, yellow, stop, check, start_time, current_time, start_time2, angle
 
     if drive:
         if start_time2 is not None:
@@ -180,6 +181,7 @@ def motion():
     # velocity_pub.publish(vel_msg)
     publish_steering(angle)
     enable_dbw()
+ 
 
 def publish_ulc_speed(speed: float) -> None:
     """Publish requested speed to the vehicle using ULC message."""
@@ -286,6 +288,7 @@ if __name__ == '__main__':
     # # intersection and waypoint positions from YAML
     # intersections = config['intersections']
     # waypoints = config['waypoints']
+    
     
     try:
         rospy.spin()
