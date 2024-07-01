@@ -154,7 +154,6 @@ def compute_speed_to_intersection():
 # make vehicle move
 def motion():
     global vel, angular_vel, yellow, stop, check, start_time, current_time, start_time2
-    speed = 3.0
 
     if drive:
         if start_time2 is not None:
