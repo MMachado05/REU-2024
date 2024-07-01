@@ -30,6 +30,7 @@ vel_msg = Twist()
 bridge = CvBridge()
 check = False
 start_time = None
+start_time2 = None
 stop = None
 stop_horiz = None
 stop_vert = None
@@ -73,12 +74,12 @@ def dyn_rcfg_cb(config, level):
 # state callback
 def state_cb(msg):
     global stop
-    stop = msg.data
+    stop = not msg.data
 
     if stop:
-        print('green')
-    else:
         print('red')
+    else:
+        print('stop')
     
     # motion()
 
@@ -96,9 +97,9 @@ def yellow_cb(y):
     yellow = y.data
 
 # angular speed callback
-def angular_vel_cb(gap):
-    global angular_vel
-    angular_vel = gap.data
+def angle_cb(ang):
+    global angle
+    angle = ang.data
 
 # DYNAMIC SPEED ALGORITHM
 # compute distance to intersection and adjust speed if needed
@@ -151,40 +152,33 @@ def compute_speed_to_intersection():
 
 # make vehicle move
 def motion():
-    global vel, angular_vel, yellow, stop, check, start_time, current_time
+    global vel, angular_vel, yellow, stop, check, start_time, current_time, start_time2
     speed = 3.0
 
-    # linear speed
-    current_time = time.time()
-    # if arrive at intersection at red stop for safety
-    if yellow and stop:
-        publish_ulc_speed(0.0)
-    # if arrive at intersection at green go straight
-    elif yellow and not stop and not check:
-        publish_ulc_speed(5.0)
-        # vel_msg.angular.z = 0.0
-        check = True
-        start_time = time.time()
-    # go straight for some time
-    elif start_time:
-        if abs(current_time - start_time) < 3.5:
-            pass
+    if drive:
+        if start_time2 is not None:
+            current_time = time.time()
+            if (current_time - start_time2) < 20:
+                publish_ulc_speed(speed)
+            else:
+                start_time2 = None
+        elif yellow and stop and start_time == None:
+            start_time = time.time()
+        elif start_time is not None:
+            # current_time = time.time()
+            if stop:
+                publish_ulc_speed(0)
+            else:
+                start_time = None
+                start_time2 = time.time()
         else:
-            start_time = None
-            check = False
-    # other cases just go at vel
-    else:
-        if drive:
             publish_ulc_speed(speed)
-        else:
-            publish_ulc_speed(0.0)
-
-        # angular speed
-        vel_msg.angular.z = angular_vel * vel
+    else:
+        publish_ulc_speed(0)
     
     # publish speed
     # velocity_pub.publish(vel_msg)
-    publish_steering(-angular_vel_sub)
+    publish_steering(angle)
     enable_dbw()
 
 def publish_ulc_speed(speed: float) -> None:
@@ -266,7 +260,7 @@ if __name__ == '__main__':
     time_to_state_sub = rospy.Subscriber('/north/time_to_state', Time, time_to_state_cb, queue_size=1)
     state_sub = rospy.Subscriber('/north/state', Bool, state_cb,queue_size=1)
     yellow_sub = rospy.Subscriber('yellow', Bool, yellow_cb, queue_size=1)
-    angular_vel_sub = rospy.Subscriber('angular_vel', Float64, angular_vel_cb, queue_size=1)
+    angle_sub = rospy.Subscriber('angle', Float64, angle_cb, queue_size=1)
     velocity_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
     # dbw pusblishers

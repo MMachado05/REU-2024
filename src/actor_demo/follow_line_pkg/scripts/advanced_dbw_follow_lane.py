@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rospy
 from sensor_msgs.msg import Image
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, Float64, Bool
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.server import Server
 from follow_line_pkg.cfg import FollowLineConfig  # packageName.cfg
@@ -233,6 +233,12 @@ def image_callback(ros_image):
     num_yellow_pix = cv.countNonZero(yellow_mask)
     yellow_pct = (100 * num_yellow_pix) / (rows2 * cols2)
     print(yellow_pct)
+
+    if yellow_pct > 2:
+        yellow_pub.publish(True)
+    else:
+        yellow_pub.publish(False)
+
         # show image
     cv.imshow("yellow", yellow_mask)
     cv.waitKey(3)    
@@ -254,43 +260,43 @@ def image_callback(ros_image):
 
     if cx:
         mid = cols / 2
-        if drive:
-            if start_time2 is not None:
-                current_time = time.time()
-                if (current_time - start_time2) < 20:
-                    publish_ulc_speed(speed)
-                else:
-                    start_time2 = None
-            elif yellow_pct > 2 and start_time == None:
-                start_time = time.time()
-            elif start_time is not None:
-                current_time = time.time()
-                if (current_time - start_time) < 5:
-                    publish_ulc_speed(0)
-                else:
-                    start_time = None
-                    start_time2 = time.time()
+        # if drive:
+        #     if start_time2 is not None:
+        #         current_time = time.time()
+        #         if (current_time - start_time2) < 20:
+        #             publish_ulc_speed(speed)
+        #         else:
+        #             start_time2 = None
+        #     elif yellow_pct > 2 and start_time == None:
+        #         start_time = time.time()
+        #     elif start_time is not None:
+        #         current_time = time.time()
+        #         if (current_time - start_time) < 5:
+        #             publish_ulc_speed(0)
+        #         else:
+        #             start_time = None
+        #             start_time2 = time.time()
 
-                # time.sleep(10)
-                # start_time = time.time()
-                # while True:
-                #     publish_ulc_speed(target_speed)
-                #     currrent_time = time.time()
-                #     if (current_time - start_time) > 4:
-                #         break
-            else:
-                publish_ulc_speed(target_speed)
-        else:
-            publish_ulc_speed(0)
+        #         # time.sleep(10)
+        #         # start_time = time.time()
+        #         # while True:
+        #         #     publish_ulc_speed(target_speed)
+        #         #     currrent_time = time.time()
+        #         #     if (current_time - start_time) > 4:
+        #         #         break
+        #     else:
+        #         publish_ulc_speed(target_speed)
+        # else:
+        #     publish_ulc_speed(0)
 
         angular_threshold = 20
         if mid < cx - angular_threshold:
-            publish_steering(-angle)
+            pub_angle(-angle)
         elif mid > cx + angular_threshold:
-            publish_steering(angle)
+            pub_angle(angle)
         else:
-            publish_steering(0)
-    enable_dbw()
+            pub_angle(0)
+    # enable_dbw()
     
 # def publish_ulc_speed(speed: float) -> None:
 #     """Publish requested speed to the vehicle using ULC message."""
@@ -355,14 +361,18 @@ def image_callback(ros_image):
 
 # main method
 if __name__ == '__main__':
-  rospy.init_node('advanced__dbw_follow_lane', anonymous=True) # initialize node
-  imgtopic = rospy.get_param("~imgtopic_name") # private name
-  rospy.Subscriber(imgtopic, Image, image_callback) # subscribe to image (so that image_callback can be called every time an image is published)
-  pub_ulc = rospy.Publisher("/vehicle/ulc_cmd", UlcCmd, queue_size=1)
-  pub_steering = rospy.Publisher("/vehicle/steering_cmd", SteeringCmd, queue_size=1)
-  pub_enable_cmd = rospy.Publisher("/vehicle/enable", Empty, queue_size=1)
-  srv = Server(FollowLineConfig, dyn_rcfg_cb) # create dynamic reconfigure server that calls dyn_rcfg_cb function every time a parameter is changed
-  try:
-    rospy.spin()
-  except rospy.ROSInterruptException:
-    pass
+    rospy.init_node('advanced__dbw_follow_lane', anonymous=True) # initialize node
+    imgtopic = rospy.get_param("~imgtopic_name") # private name
+    rospy.Subscriber(imgtopic, Image, image_callback) # subscribe to image (so that image_callback can be called every time an image is published)
+    pub_ulc = rospy.Publisher("/vehicle/ulc_cmd", UlcCmd, queue_size=1)
+    pub_steering = rospy.Publisher("/vehicle/steering_cmd", SteeringCmd, queue_size=1)
+
+    pub_angle = rospy.Publisher("angle", Float64, queue_size=1)
+    yellow_pub = rospy.Publisher('yellow', Bool, queue_size=1)
+
+    pub_enable_cmd = rospy.Publisher("/vehicle/enable", Empty, queue_size=1)
+    srv = Server(FollowLineConfig, dyn_rcfg_cb) # create dynamic reconfigure server that calls dyn_rcfg_cb function every time a parameter is changed
+    try:
+        rospy.spin()
+    except rospy.ROSInterruptException:
+        pass
