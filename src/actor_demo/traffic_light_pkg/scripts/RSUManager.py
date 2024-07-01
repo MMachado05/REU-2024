@@ -7,8 +7,6 @@ from std_msgs.msg import Bool
 from std_msgs.msg import Time
 import threading
 
-last_published_message = None
-
 class RSUManager:
   
     def __init__(self):
@@ -48,12 +46,10 @@ class RSUManager:
         while not rospy.is_shutdown():
             
             self.north_pub.publish(1)
-            last_published_message = 1
             self.timeN = rospy.Time.from_sec(rospy.Time.now().to_sec() + self.green_dur)
             rospy.sleep(self.green_dur)
             
             self.north_pub.publish(0)
-            last_published_message = 0
             self.timeN = rospy.Time.from_sec(rospy.Time.now().to_sec() + self.all_red_dur * 2 + self.green_dur)
             rospy.sleep(self.all_red_dur)
             
@@ -64,13 +60,29 @@ class RSUManager:
             self.south_pub.publish(0)
             self.timeS = rospy.Time.from_sec(rospy.Time.now().to_sec() + self.all_red_dur * 2 + self.green_dur)
             rospy.sleep(self.all_red_dur)
+    
+    def crosswalk(self):
+        
+        while not rospy.is_shutdown():
+            
+            self.north_pub.publish(1)
+            self.south_pub.publish(1)
+            self.timeN = rospy.Time.from_sec(rospy.Time.now().to_sec() + self.green_dur)
+            self.timeS = rospy.Time.from_sec(rospy.Time.now().to_sec() + self.green_dur)
+            rospy.sleep(self.green_dur)
+            
+            self.north_pub.publish(0)
+            self.south_pub.publish(0)
+            self.timeN = rospy.Time.from_sec(rospy.Time.now().to_sec() + self.all_red_dur * 2 + self.green_dur)
+            self.timeS = rospy.Time.from_sec(rospy.Time.now().to_sec() + self.all_red_dur * 2 + self.green_dur)
+            rospy.sleep(self.all_red_dur * 2 + self.green_dur)
 
 
 if __name__ == '__main__':
     rospy.init_node("traffic_light", anonymous=True)
     manager = RSUManager()
     try:
-        state_thread = threading.Thread(target=manager.intersection)
+        state_thread = threading.Thread(target=manager.crosswalk)
         time_thread = threading.Thread(target=manager.publish_time)
         
         state_thread.start()
