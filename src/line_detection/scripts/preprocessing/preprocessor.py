@@ -82,7 +82,7 @@ class ROSImagePreprocessor:
         self.dyn_rcfg_srv = Server(PreprocessorConfig, self._dynamic_reconfig_callback)
 
         # Initially-set preprocessing parameters
-        self.initial_crop_top = 0.5
+        self.initial_crop_top = 0.0
         self.initial_crop_bottom = 1.0
         self.initial_crop_left = 0.0
         self.initial_crop_right = 1.0  # Crop out the top half of the image
@@ -193,9 +193,11 @@ class ROSImagePreprocessor:
         """
         # Convert ROS image to OpenCV image
         try:
+            # rospy.loginfo(f"ros_image encoding: {ros_image.encoding}")
             cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(ros_image, "bgr8")
+            # rospy.loginfo(f"converted image encoding: {cv_image.dtype}")
         except CvBridgeError as e:
-            rospy.logerr(f"CvBridge Error: {e}")
+            rospy.logerr(f"preprocessor - ROS to OpenCV Bridge Error: {e}")
             return
 
         # Initial crop
@@ -234,8 +236,6 @@ class ROSImagePreprocessor:
 
         # Add poly mask
         if self.use_poly_mask:
-            # NOTE: I have no idea if this works with perspective warping enabled, but I don't
-            #   think they should be used together, anyways
             height, width = rows, cols
             mask = np.zeros((rows, cols), dtype="uint8")
             roi_points = [
@@ -271,11 +271,14 @@ class ROSImagePreprocessor:
             cv.waitKey(1)
 
         try:
-            self.processed_img_publisher.publish(
-                self.rosimg_cv_bridge.cv2_to_imgmsg(cv_image)
-            )
+            # cv_image = cv.cvtColor(cv_image, cv.COLOR_GRAY2BGR)
+            preprocessed_image = self.rosimg_cv_bridge.cv2_to_imgmsg(cv_image, "passthrough")
+            # rospy.loginfo(f"preprocessed image encoding: {preprocessed_image.encoding}")
         except CvBridgeError as e:
-            rospy.logerr(f"CvBridge Error: {e}")
+            rospy.logerr(f"preprocessor - OpenCV to ROS Bridge Error: {e}")
+            return
+
+        self.processed_img_publisher.publish(preprocessed_image)
 
 
 if __name__ == "__main__":
