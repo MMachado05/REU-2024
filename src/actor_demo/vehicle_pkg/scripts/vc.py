@@ -163,7 +163,7 @@ def motion():
                 publish_ulc_speed(speed)
             else:
                 start_time2 = None
-        elif yellow and stop and start_time == None:
+        elif yellow and stop and start_time is None:
             start_time = time.time()
         elif start_time is not None:
             # current_time = time.time()
@@ -174,12 +174,11 @@ def motion():
                 start_time2 = time.time()
         else:
             publish_ulc_speed(speed)
+        publish_steering(angle)
     else:
         publish_ulc_speed(0)
+        publish_steering(0)
     
-    # publish speed
-    # velocity_pub.publish(vel_msg)
-    publish_steering(angle)
     enable_dbw()
  
 
