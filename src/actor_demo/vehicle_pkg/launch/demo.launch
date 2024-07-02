@@ -8,11 +8,19 @@
     </group> -->
 
     <!-- Actor 2-->
-    <group ns="actor2">
+    <!-- <group ns="actor2">
         <include file="$(find follow_line_pkg)/launch/advanced_dbw_follow_lane.launch" />
         <node name="vc_node" pkg="vehicle_pkg" type="vc.py" required="true" output="screen">
             <param name="light_ns" type="string" value="south" />
         </node>
-    </group>
+    </group> -->
+
+    <!-- Input Arguments -->
+    <arg name="actor2" default="true" />
+
+    <!-- Launching different DBScan Follow Lane Launches depending on the car -->
+    <!-- For camera purposes -->
+    <group if="$(arg actor2)">
+        <include file="$(find )"
 
 </launch>
