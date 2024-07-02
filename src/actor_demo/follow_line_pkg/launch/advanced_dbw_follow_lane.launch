@@ -1,4 +1,5 @@
 <launch>
+    
     <include file="$(find simple_camera_publisher)/launch/example.launch" >
 
    </include>
