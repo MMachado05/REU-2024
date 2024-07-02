@@ -19,7 +19,7 @@
     <!-- USB Camera .............................................................. -->
     <node name="cam_pub" pkg="simple_camera_publisher" type="cam_pub" respawn="true" respawn_delay="10" output="screen">
         <!-- Use device path from /dev/v4l/by-id -->
-        <param name="source" type="string" value="/dev/v4l/by-id/usb-Sonix_Technology_Co.__Ltd._USB_2.0_Camera_SN0001-video-index0" />
+        <param name="source" type="string" value="/dev/v4l/by-id/usb-S1F0009330LB620L4500072R_Integrated_Camera_SunplusIT_Inc-video-index0" />
         <param name="show_output" type="bool" value="true" />
     </node>
     <!-- ......................................................................... -->
@@ -46,7 +46,7 @@
 
     <!-- Vehicle Controller -->
     <node name="vc_node" pkg="vehicle_pkg" type="vc.py" required="true" output="screen">
-        <param name="light_ns" type="string" value="south" />
+        <param name="light_ns" type="string" value="north" />
     </node>
     <!-- ......................................................................... -->
 
