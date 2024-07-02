@@ -13,6 +13,8 @@
     </group> -->
 
     <!-- NEW LAUNCH-->
+    <!-- Actor1: roslaunch vehicle_pkg demo.launch actor1:=true-->
+    <!-- Actor2: roslaunch vehicle_pkg demo.launch -->
 
     <!-- Input Arguments -->
     <arg name="actor1" default="false" />
