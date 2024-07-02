@@ -121,7 +121,6 @@ def compute_speed_to_intersection():
     except Break:
         pass
             
-            
     if direction == 0:
         stop = stop_horiz
         # print(f"{stop_horiz} == {stop}")
@@ -131,8 +130,6 @@ def compute_speed_to_intersection():
     
     # print(stop)
 
-    curr_velocity = 5
-
     if stop: # light is red
         print("red")
         # x = x0+ vt -> t = dx / v
@@ -141,7 +138,7 @@ def compute_speed_to_intersection():
         if t < 10: # if time to arrive less than changing to green light
             # print(float(total_distance / 10))
             return float(total_distance / 10) - 0.5 # adjust speed
-        
+
         else:
             return 5.0 # else keep speed
 
@@ -184,6 +181,7 @@ def motion():
     
     # publish speed
     velocity_pub.publish(vel_msg)
+    speed_pub.publish(vel_msg.linear.x)
 
 # main method
 if __name__ == '__main__':
@@ -196,6 +194,7 @@ if __name__ == '__main__':
     yellow_sub = rospy.Subscriber("yellow", Bool, yellow_cb, queue_size=1)
     angular_vel_sub = rospy.Subscriber("angular_vel", Float64, angular_vel_cb, queue_size=1)
     velocity_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+    speed_pub = rospy.Publisher('speed', Float64, queue_size=1)
     srv = Server(FollowLaneConfig, dyn_rcfg_cb)
 
     rospack = rospkg.RosPack()
