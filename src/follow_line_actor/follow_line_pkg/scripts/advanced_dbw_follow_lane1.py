@@ -251,7 +251,7 @@ def image_callback(ros_image):
     #angle = float(math.degrees(abs(gap)/(rows//2)) /2)
     target_speed = speed #mph
     
-
+    yellow_pct = 0
     if cx:
         mid = cols / 2
         if drive:
@@ -282,7 +282,7 @@ def image_callback(ros_image):
                 publish_ulc_speed(target_speed)
         else:
             publish_ulc_speed(0)
-
+        print('t')
         angular_threshold = 20
         if mid < cx - angular_threshold:
             publish_steering(-angle)
