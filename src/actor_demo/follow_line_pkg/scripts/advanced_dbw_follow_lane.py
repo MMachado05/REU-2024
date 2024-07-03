@@ -106,7 +106,7 @@ def compute_lines(rows, cols, image, crop1, crop2):
     points = np.column_stack(np.where(line_image > 0))   
     
     if len(points) == 0:
-        print("No white pixels detected.")
+        # print("No white pixels detected.")
         return None, 0
 
     # downsample the points uniformly for clustering
@@ -155,11 +155,11 @@ def compute_lines(rows, cols, image, crop1, crop2):
         if centroid_x < (cols // 2):
             cx = (cols // 2 + 100)
 
-            print(cx)
+            # print(cx)
             return cx, cy, cols, rows
         else:
             cx = (cols // 2 - 100)
-            print(cx)
+            # print(cx)
             return cx, cy, cols, rows
 
     else:
@@ -232,7 +232,7 @@ def image_callback(ros_image):
     # check for intersection
     num_yellow_pix = cv.countNonZero(yellow_mask)
     yellow_pct = (100 * num_yellow_pix) / (rows2 * cols2)
-    print(yellow_pct)
+    # print(yellow_pct)
 
     if yellow_pct > 2:
         yellow_pub.publish(True)

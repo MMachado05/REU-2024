@@ -88,7 +88,7 @@ def state_cb(msg):
 def time_to_state_cb(msg):
     global left_time
     left_time = str(msg.data.secs) + '.' + str(msg.data.nsecs) # count down (periods of 10s)
-    print(left_time)
+    # print(left_time)
 
     motion()
 
@@ -258,16 +258,16 @@ if __name__ == '__main__':
     # velocity_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
     light_ns = rospy.get_param("~light_ns")
-    time_to_state_sub = rospy.Subscriber('/' + light_ns + '/time_to_state', Time, time_to_state_cb, queue_size=1)
-    state_sub = rospy.Subscriber('/' + light_ns + '/state', Bool, state_cb,queue_size=1)
+    time_to_state_sub = rospy.Subscriber('/south/time_to_state', Time, time_to_state_cb, queue_size=1)
+    state_sub = rospy.Subscriber('/south/state', Bool, state_cb,queue_size=1)
     yellow_sub = rospy.Subscriber('yellow', Bool, yellow_cb, queue_size=1)
     angle_sub = rospy.Subscriber('angle', Float64, angle_cb, queue_size=1)
     velocity_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
 
     # dbw pusblishers
-    pub_ulc = rospy.Publisher("/vehicle/ulc_cmd", UlcCmd, queue_size=1)
-    pub_steering = rospy.Publisher("/vehicle/steering_cmd", SteeringCmd, queue_size=1)
-    pub_enable_cmd = rospy.Publisher("/vehicle/enable", Empty, queue_size=1)
+    pub_ulc = rospy.Publisher("vehicle/ulc_cmd", UlcCmd, queue_size=1)
+    pub_steering = rospy.Publisher("vehicle/steering_cmd", SteeringCmd, queue_size=1)
+    pub_enable_cmd = rospy.Publisher("vehicle/enable", Empty, queue_size=1)
 
 
 
