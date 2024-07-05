@@ -3,7 +3,7 @@ import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.server import Server
-from line_detection.cfg import DBScanLaneDetectorConfig  # packageName.cfg
+from lane_detectors_pkg.cfg import DBScanLaneDetectorConfig  # packageName.cfg
 from geometry_msgs.msg import Twist
 import cv2 as cv
 import numpy as np
@@ -31,11 +31,12 @@ class DBScanLaneDetector:
     extension_factor: float
     extension_candidate_max: int
 
-    percent_downsample: float
+    percent_downsample: int
     epsilon: int
 
     rosimg_cv_bridge: CvBridge
     offset_message: Twist
+    num_line_last_seen: int
 
     # ------------------------------------------------
     # ------- Internal state-related functions -------
@@ -68,12 +69,13 @@ class DBScanLaneDetector:
         self.extension_factor = 2.0
         self.extension_candidate_max = 100
 
-        self.percent_downsample = 0.01
+        self.percent_downsample = 10
         self.epsilon = 70
 
         # Misc.
         self.rosimg_cv_bridge = CvBridge()
         self.offset_message = Twist()
+        self.num_line_last_seen = 0
 
         # Begin lane detection
         rospy.spin()
@@ -97,7 +99,7 @@ class DBScanLaneDetector:
         self.extension_factor = config.extension_factor
         self.extension_candidate_max = config.extension_candidate_max
 
-        self.percent_downsample = config.percent_downsample / 100
+        self.percent_downsample = config.percent_downsample
         self.epsilon = config.epsilon
 
         return config
@@ -123,7 +125,9 @@ class DBScanLaneDetector:
             The preprocessed image to detect the lane in.
         """
         try:
-            grayscale_cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(ros_image)  # passthrough
+            grayscale_cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(
+                ros_image
+            )  # passthrough
             grayscale_cv_image = grayscale_cv_image.copy()
             color_cv_image = cv.cvtColor(grayscale_cv_image, cv.COLOR_GRAY2BGR)
         except CvBridgeError as e:
@@ -164,6 +168,7 @@ class DBScanLaneDetector:
                     y2 = int(y2 + (y2 - y1) * self.extension_factor)
                 cv.line(houghlines_only_image, (x1, y1), (x2, y2), (255, 255, 255), 2)
 
+        # cv.imshow("houghlines_only_image", houghlines_only_image)
         # Collect white points for DBScan
         white_points = np.column_stack(np.where(houghlines_only_image > 0))
         if len(white_points) == 0:
@@ -172,8 +177,8 @@ class DBScanLaneDetector:
             self.center_offset_publisher.publish(self.offset_message)
             return
 
-        downsample_factor = int(len(white_points) * self.percent_downsample)
-        white_points = white_points[::downsample_factor]
+        downsample_step = int(100 / self.percent_downsample)
+        white_points = white_points[::downsample_step]
 
         dbscan = DBSCAN(eps=self.epsilon, min_samples=3)
         cluster_labels = dbscan.fit_predict(white_points)
@@ -192,10 +197,10 @@ class DBScanLaneDetector:
 
         sorted_clusters = sorted(
             potential_lane_line_cluster_labels, key=lambda x: x[1], reverse=True
-        )
-        candidate_labels = [
-            sorted_clusters[i][0] for i in range(min(2, len(sorted_clusters)))
+        )[
+            :2
         ]  # Want the two biggest clusters (potential lane lines)
+        candidate_labels = [sorted_clusters[i][0] for i in range(len(sorted_clusters))]
 
         lane_line_centroids_x = []
         lane_line_centroids_y = []
@@ -228,7 +233,9 @@ class DBScanLaneDetector:
 
         # Calculate information from candidate lane lines
         if lane_line_centroids == 0:
-            rospy.logerr("dbscan_lane_detector - No lane lines were calculated.")
+            if self.num_line_last_seen != 0:
+                rospy.logerr("dbscan_lane_detector - I can't see any lane lines!")
+                self.num_line_last_seen = 0
             self.offset_message.angular.z = 1
             self.center_offset_publisher.publish(self.offset_message)
             if self.display_desired_twist_image:
@@ -244,15 +251,25 @@ class DBScanLaneDetector:
         image_midpoint_y = rows // 2
 
         if lane_line_centroids == 1:
-            rospy.logwarn("dbscan_lane_detector - Only one lane line found.")
-            desired_twist_x = (
-                -(image_midpoint_x - (centroid_avg_midpoint_x - image_midpoint_x))
-                / image_midpoint_x
-            )  # "Strengthen" curves close to center, and invert direction
+            if self.num_line_last_seen != 1:
+                rospy.logwarn("dbscan_lane_detector - I can only see one lane line!")
+                self.num_line_last_seen = 1
+            x_side = -1 if centroid_avg_midpoint_x < image_midpoint_x else 1
+
+            desired_twist_x = -(
+                x_side
+                * (
+                    (image_midpoint_x - abs(centroid_avg_midpoint_x - image_midpoint_x))
+                    / image_midpoint_x
+                )
+            )
             desired_twist_y = (
                 centroid_avg_midpoint_y - image_midpoint_y
             ) / image_midpoint_y
         else:
+            if self.num_line_last_seen != 2:
+                rospy.loginfo("dbscan_lane_detector - Two lane lines found.")
+                self.num_line_last_seen = 2
             desired_twist_x = (
                 centroid_avg_midpoint_x - image_midpoint_x
             ) / image_midpoint_x

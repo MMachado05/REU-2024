@@ -3,7 +3,7 @@ import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from dynamic_reconfigure.server import Server
-from line_detection.cfg import PreprocessorConfig  # packageName.cfg
+from preprocessors_pkg.cfg import PreprocessorConfig  # packageName.cfg
 import cv2 as cv
 import numpy as np
 
@@ -48,9 +48,6 @@ class ROSImagePreprocessor:
     use_canny: bool
     canny_lower_thresh: int
     canny_upper_thresh: int
-
-    use_live_crop: bool
-    live_crop_weight: float
 
     display_preprocessed_image: bool
 
@@ -103,8 +100,6 @@ class ROSImagePreprocessor:
         self.poly_bottom_left = 1.0
         self.poly_bottom_right = 1.0
 
-        # TODO: Add live cropping
-
         self.filter_white = True
         self.white_thresh = 220
 
@@ -113,9 +108,6 @@ class ROSImagePreprocessor:
         self.use_canny = True
         self.canny_lower_thresh = 50
         self.canny_upper_thresh = 150
-
-        self.use_live_crop = False
-        self.live_crop_weight = 0.5
 
         self.display_preprocessed_image = False
 
@@ -171,9 +163,6 @@ class ROSImagePreprocessor:
         self.use_canny = config.use_canny
         self.canny_lower_thresh = config.canny_lower_thresh
         self.canny_upper_thresh = config.canny_upper_thresh
-
-        self.use_live_crop = config.use_live_crop
-        self.live_crop_weight = config.live_crop_weight
 
         self.display_preprocessed_image = config.display_preprocessed_image
 
@@ -248,8 +237,6 @@ class ROSImagePreprocessor:
             ]
             cv.fillPoly(mask, [np.array(roi_points)], (255, 255, 255))
             cv_image = cv.bitwise_and(cv_image, cv_image, mask=mask)
-
-        # TODO: Add live cropping
 
         if self.use_median_blur:
             cv_image = cv.medianBlur(cv_image, 5)

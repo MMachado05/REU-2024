@@ -62,10 +62,11 @@ def compute_lines(rows, image, crop1, crop2):
     # canny filtering to get edges
     edges = cv.Canny(thresh, 50, 150, 3)
 
-    #cv.imshow("Canny", edges)
+    # cv.imshow("Canny", edges)
 
     # get list of lines
     lines = cv.HoughLinesP(edges, 1, np.pi / 180, threshold=20, minLineLength=20, maxLineGap=10)
+    # rospy.loginfo(f"original - number of lines: {len(lines)}")
     
     # empty image to draw filtered lines
     line_image = np.zeros_like(image)
@@ -74,16 +75,6 @@ def compute_lines(rows, image, crop1, crop2):
     if lines is not None:
         for line in lines:
 
-            # x1, y1, x2, y2 = line[0]
-            # dx = x2 - x1
-            # dy = y2 - y1
-            # if dx == 0: 
-            #     slope = float('inf')
-            # else:
-            #     slope = dy / dx
-
-            # if abs(slope) >= 0.4:
-            #     cv.line(line_image, (x1, y1), (x2, y2), (255, 255, 255), 2)
             x1, y1, x2, y2 = line[0]
             
             # Calculate length of the line segment
@@ -108,7 +99,7 @@ def compute_lines(rows, image, crop1, crop2):
             elif abs(slope) >= 0.4:
                 cv.line(line_image, (x1, y1), (x2, y2), (255, 255, 255), 2)
 
-    cv.imshow("hough", line_image)
+    # cv.imshow("hough", line_image)
 
     # get white points
     points = np.column_stack(np.where(line_image > 0))   
@@ -187,7 +178,7 @@ def compute_lines(rows, image, crop1, crop2):
     # display image with lanes
     cv.circle(image, (cols//2,rows // 2), 5, (0, 0, 0), -1)
     cv.arrowedLine(image, (cols//2,rows // 2), (cx,rows // 2), (255, 255, 255), 3)
-    cv.imshow("Polynomial lanes", image)
+    # cv.imshow("Polynomial lanes", image)
     cv.imshow("Labeled points", image2)
     cv.waitKey(3) 
     return cx, (cx - (cols // 2))

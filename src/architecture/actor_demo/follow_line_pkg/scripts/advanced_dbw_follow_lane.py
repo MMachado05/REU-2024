@@ -65,6 +65,7 @@ def compute_lines(rows, cols, image, crop1, crop2):
 
     # get list of lines
     lines = cv.HoughLinesP(edges, 3, np.pi / 180, threshold=20, minLineLength=10, maxLineGap=10)
+    rospy.loginfo(f"original - number of lines: {len(lines)}")
     
     # empty image to draw filtered lines
     line_image = np.zeros_like(image)
