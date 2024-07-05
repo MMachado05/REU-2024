@@ -1,0 +1,17 @@
+<launch>
+    <include file="$(find simple_camera_publisher)/launch/example.launch" >
+
+   </include>
+    <arg name="show_dynamic_reconfigure" default="true"/>
+    <!-- launch the node -->
+    <!-- <node name="cam_pub" pkg="simple_camera_publisher" type="cam_pub" respawn="true" respawn_delay="10" output="screen">
+        <param name="source" type="string" value="$(arg source)" />
+    </node> -->
+
+    <node name="follow_line" pkg="follow_line_pkg" type="follow_line.py" required="true" output="screen">
+        <param name="imgtopic_name" type="str" value="/cam_pub/image_raw" />   
+    </node>
+    <group if="$(arg show_dynamic_reconfigure)">
+    	<node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_console" args="-t"/>
+    </group>
+</launch>
