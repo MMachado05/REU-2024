@@ -1,14 +1,6 @@
-GazelleSim Simulator
-------
+# gazelle_sim
+GazelleSim simulator - noetic release
 
-Version History
-
-v1.0.0
-Fixed xml int to double conversion issue for reading parameter files.
-
-
-v1.1.0
-Added camera parameter dynamic reconfigure application
-
-
-
+* gazelle_sim: GazelleSim source code
+* gazelle_sim_docs: GazelleSim documentation
+* gazelle_sim_models: GazelleSim example model library

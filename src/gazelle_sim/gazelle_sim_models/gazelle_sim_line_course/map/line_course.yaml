@@ -1,0 +1,10 @@
+# Field image location
+field_image_file: 'line_course.png'
+field_image_file: 'line_course_2.png'
+
+# Image file scaling and center
+pixels_per_meter: 250.0
+x_center_img: 750
+y_center_img: 750
+img_view_scale: 0.50
+

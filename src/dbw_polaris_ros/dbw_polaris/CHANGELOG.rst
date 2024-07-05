@@ -1,0 +1,58 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package dbw_polaris
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1.1.3 (2024-01-02)
+------------------
+* Fix install script for end-of-life ROS distros
+* Contributors: Kevin Hallenbeck
+
+1.1.2 (2023-09-11)
+------------------
+
+1.1.1 (2023-05-10)
+------------------
+
+1.1.0 (2022-11-30)
+------------------
+* Fix ROS install key after they changed it
+* Contributors: Kevin Hallenbeck
+
+1.0.2 (2022-03-08)
+------------------
+
+1.0.1 (2021-09-20)
+------------------
+
+1.0.0 (2021-05-12)
+------------------
+
+0.0.8 (2021-03-09)
+------------------
+
+0.0.7 (2021-01-14)
+------------------
+
+0.0.6 (2020-11-16)
+------------------
+
+0.0.5 (2020-11-04)
+------------------
+
+0.0.4 (2020-10-12)
+------------------
+
+0.0.3 (2020-08-17)
+------------------
+
+0.0.2 (2020-08-06)
+------------------
+* Add Ubuntu Focal and ROS Noetic to ROS install script
+* Increase CMake minimum version to 3.0.2 to avoid warning about CMP0048
+  http://wiki.ros.org/noetic/Migration#Increase_required_CMake_version_to_avoid_author_warning
+* Contributors: Kevin Hallenbeck
+
+0.0.1 (2020-02-28)
+------------------
+* Initial release (fork of dbw_fca_ros)
+* Contributors: Kevin Hallenbeck

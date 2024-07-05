@@ -1,9 +1,0 @@
-# Robot name
-string name
-
-# Robot location
-float32 x
-float32 y
-float32 theta
----
-bool success

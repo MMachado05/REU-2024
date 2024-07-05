@@ -1,0 +1,12 @@
+# Field image file name
+field_image_file: 'ltu_course_google_14ppm.png'
+field_image_file: 'h23r_course.jpg'
+
+# Image file scaling and center
+pixels_per_meter: 93.0
+x_center_img: 1050
+y_center_img: 3100
+img_view_scale: 0.2
+
+north_angle: deg(45)
+

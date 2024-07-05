@@ -1,0 +1,22 @@
+# Field image location
+field_image_file: 'test_grid.png'
+
+# Image file scaling and center
+pixels_per_meter: 200.0
+x_center_img: 0
+y_center_img: 1200
+img_view_scale: 0.5
+
+# Circlar obstructions
+circlist: [ [ 2.0, 1.0, 0.35 ],
+            [ 2.0, 3.0, 0.35 ],
+            [ 2.0, 5.0, 0.35 ],
+            [ 3.5, 0.5, 0.35 ],
+            [ 3.5, 2.0, 0.35 ],
+            [ 3.5, 4.0, 0.35 ],
+            [ 3.5, 5.5, 0.35 ],
+            [ 5.0, 1.0, 0.35 ],
+            [ 5.0, 3.0, 0.35 ],
+            [ 5.0, 5.0, 0.35 ] ]
+
+

@@ -1,0 +1,12 @@
+- git:
+    local-name: lusb
+    uri: https://bitbucket.org/DataspeedInc/lusb.git
+    version: master
+- git:
+    local-name: dataspeed_can
+    uri: https://bitbucket.org/DataspeedInc/dataspeed_can.git
+    version: master
+- git:
+    local-name: dbw_polaris_ros
+    uri: https://bitbucket.org/DataspeedInc/dbw_polaris_ros.git
+    version: master

@@ -1,7 +1,0 @@
-camera_border: true
-camera_f: 45.0
-camera_phi: deg(45.0)
-camera_z: 0.3
-collision_type: 0
-dyn_load_obs: false
-exterior_walls: false
