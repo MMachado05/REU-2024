@@ -182,9 +182,7 @@ class ROSImagePreprocessor:
         """
         # Convert ROS image to OpenCV image
         try:
-            # rospy.loginfo(f"ros_image encoding: {ros_image.encoding}")
             cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(ros_image, "bgr8")
-            # rospy.loginfo(f"converted image encoding: {cv_image.dtype}")
         except CvBridgeError as e:
             rospy.logerr(f"preprocessor - ROS to OpenCV Bridge Error: {e}")
             return
