@@ -148,6 +148,9 @@ class DBScanLaneDetector:
         # Generate a B/W image with only validated hough lane lines
         houghlines_only_image = np.zeros_like(grayscale_cv_image)
         if houghlines is None:
+            if self.display_desired_twist_image:
+                cv.imshow("Twist message visualization", grayscale_cv_image)
+                cv.waitKey(1)
             rospy.logerr("dbscan_lane_detector - Unable to generate hough lines.")
             self.offset_message.angular.z = 1
             self.center_offset_publisher.publish(self.offset_message)
@@ -168,10 +171,12 @@ class DBScanLaneDetector:
                     y2 = int(y2 + (y2 - y1) * self.extension_factor)
                 cv.line(houghlines_only_image, (x1, y1), (x2, y2), (255, 255, 255), 2)
 
-        # cv.imshow("houghlines_only_image", houghlines_only_image)
         # Collect white points for DBScan
         white_points = np.column_stack(np.where(houghlines_only_image > 0))
         if len(white_points) == 0:
+            if self.display_desired_twist_image:
+                cv.imshow("Twist message visualization", grayscale_cv_image)
+                cv.waitKey(1)
             rospy.logerr("dbscan_lane_detector - Unable to detect white pixels.")
             self.offset_message.angular.z = 1
             self.center_offset_publisher.publish(self.offset_message)
@@ -192,7 +197,7 @@ class DBScanLaneDetector:
             if (
                 label != -1 and len(cluster_points) >= 10
             ):  # Ignore points labeled as noise
-                # TODO: Make this dynamically reconfigurable
+                # TODO: Make this dynamically reconfigurable (maybe)
                 potential_lane_line_cluster_labels.append((label, centroid_y))
 
         sorted_clusters = sorted(
@@ -239,7 +244,7 @@ class DBScanLaneDetector:
             self.offset_message.angular.z = 1
             self.center_offset_publisher.publish(self.offset_message)
             if self.display_desired_twist_image:
-                cv.imshow("Lane clusters (0)", color_cv_image)
+                cv.imshow("Twist message visualization", color_cv_image)
                 cv.waitKey(1)
             return
 
@@ -295,7 +300,7 @@ class DBScanLaneDetector:
                 (255, 255, 255),
                 2,
             )
-            cv.imshow("Lane clusters", color_cv_image)
+            cv.imshow("Twist message visualization", color_cv_image)
             cv.waitKey(1)
 
         self.center_offset_publisher.publish(self.offset_message)
