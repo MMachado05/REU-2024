@@ -8,8 +8,11 @@ project(traffic_light_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  dynamic_reconfigure
   roscpp
+  rospkg
   rospy
+  sensor_msgs
   std_msgs
 )
 
@@ -70,7 +73,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   std_msgs
+#   sensor_msgs#   std_msgs
 # )
 
 ################################################
@@ -105,7 +108,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES traffic_light_pkg
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  CATKIN_DEPENDS dynamic_reconfigure roscpp rospkg rospy sensor_msgs std_msgs
 #  DEPENDS system_lib
 )
 
