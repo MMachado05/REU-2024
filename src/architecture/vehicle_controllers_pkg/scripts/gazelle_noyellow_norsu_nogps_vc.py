@@ -5,7 +5,7 @@ import math
 
 from geometry_msgs.msg import Twist
 from dynamic_reconfigure.server import Server
-from vehicle_controllers_pkg import GazelleNoYNoRNoGConfig
+from vehicle_controllers_pkg.cfg import GazelleNoYNoRNoGConfig
 
 
 class SimpleGazelleVC:
@@ -45,7 +45,7 @@ class SimpleGazelleVC:
             GazelleNoYNoRNoGConfig, self._dynamic_reconfig_callback
         )
 
-        self.drive = False
+        self.drive_on = False
         self.speed = 0.0
         self.twist_multiplier = 1.0
 
@@ -59,7 +59,7 @@ class SimpleGazelleVC:
         """
         Callback for dynamic reconfigure.
         """
-        self.drive = config.drive_on
+        self.drive_on = config.drive_on
         self.speed = config.speed
         self.twist_multiplier = config.twist_multiplier
 
@@ -76,7 +76,7 @@ class SimpleGazelleVC:
         incoming_twist: Twist
             The received twist message guiding the lane following.
         """
-        if not self.drive:
+        if not self.drive_on:
             if self.is_driving:
                 rospy.loginfo("simple_gazelle_vc - stopping vehicle")
                 self.is_driving = False
@@ -89,7 +89,7 @@ class SimpleGazelleVC:
             rospy.loginfo("simple_gazelle_vc - starting vehicle")
             self.is_driving = True
         self.velocity_msg.linear.x = self.speed
-        self.velocity_msg.angular.z = (
+        self.velocity_msg.angular.z = -(
             math.atan2(incoming_twist.angular.x, incoming_twist.angular.y)
             * self.twist_multiplier
         )
