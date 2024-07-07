@@ -48,9 +48,9 @@ class EasyBirdseyeImagePreprocessor:
     raw_img_subscriber: rospy.Subscriber
     processed_img_publisher: rospy.Publisher
     dyn_rcfg_srv: Server
-    # TODO: Add required live cropping subscriber
 
     rosimg_cv_bridge: CvBridge
+    image_is_displaying: bool
 
     # ------------------------------------------------
     # ------- Internal state-related functions -------
@@ -101,6 +101,7 @@ class EasyBirdseyeImagePreprocessor:
 
         # Misc.
         self.rosimg_cv_bridge = CvBridge()
+        self.image_is_displaying = False
 
         # Begin preprocessing
         rospy.spin()
@@ -241,6 +242,11 @@ class EasyBirdseyeImagePreprocessor:
             return
 
         self.processed_img_publisher.publish(preprocessed_image)
+
+        # TODO: Figure out how to get this to work.
+        if not self.display_preprocessed_image and self.image_is_displaying:
+            cv.destroyAllWindows()
+            self.image_is_displaying = self.display_preprocessed_image
 
 
 if __name__ == "__main__":
