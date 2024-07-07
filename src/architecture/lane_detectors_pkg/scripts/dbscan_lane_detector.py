@@ -253,12 +253,14 @@ class DBScanLaneDetector:
 
         rows, cols = grayscale_cv_image.shape
         image_midpoint_x = cols // 2
-        image_midpoint_y = rows // 2
+        height = rows
 
+        # Twist method calculation depends on how the x centroid was derived
         if lane_line_centroids == 1:
             if self.num_line_last_seen != 1:
                 rospy.logwarn("dbscan_lane_detector - I can only see one lane line!")
                 self.num_line_last_seen = 1
+
             x_side = -1 if centroid_avg_midpoint_x < image_midpoint_x else 1
 
             desired_twist_x = -(
@@ -268,19 +270,15 @@ class DBScanLaneDetector:
                     / image_midpoint_x
                 )
             )
-            desired_twist_y = (
-                centroid_avg_midpoint_y - image_midpoint_y
-            ) / image_midpoint_y
         else:
             if self.num_line_last_seen != 2:
                 rospy.loginfo("dbscan_lane_detector - Two lane lines found.")
                 self.num_line_last_seen = 2
+
             desired_twist_x = (
                 centroid_avg_midpoint_x - image_midpoint_x
             ) / image_midpoint_x
-            desired_twist_y = (
-                centroid_avg_midpoint_y - image_midpoint_y
-            ) / image_midpoint_y
+        desired_twist_y = (height - centroid_avg_midpoint_y) / height
 
         self.offset_message.angular.x = desired_twist_x
         self.offset_message.angular.y = desired_twist_y
@@ -290,9 +288,7 @@ class DBScanLaneDetector:
             desired_midpoint_x = int(
                 image_midpoint_x + (desired_twist_x * image_midpoint_x)
             )
-            desired_midpoint_y = int(
-                image_midpoint_y + (desired_twist_y * image_midpoint_y)
-            )
+            desired_midpoint_y = centroid_avg_midpoint_y
             cv.arrowedLine(
                 color_cv_image,
                 (image_midpoint_x, rows),
