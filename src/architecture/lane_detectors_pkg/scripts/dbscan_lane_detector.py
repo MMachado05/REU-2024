@@ -38,6 +38,9 @@ class DBScanLaneDetector:
     offset_message: Twist
     num_line_last_seen: int
 
+    generated_houghlines: bool
+    found_white_pixels: bool
+
     # ------------------------------------------------
     # ------- Internal state-related functions -------
     # ------------------------------------------------
@@ -76,6 +79,9 @@ class DBScanLaneDetector:
         self.rosimg_cv_bridge = CvBridge()
         self.offset_message = Twist()
         self.num_line_last_seen = 0
+
+        self.generated_houghlines = True
+        self.found_white_pixels = True
 
         # Begin lane detection
         rospy.spin()
@@ -151,7 +157,9 @@ class DBScanLaneDetector:
             if self.display_desired_twist_image:
                 cv.imshow("Twist message visualization", grayscale_cv_image)
                 cv.waitKey(1)
-            rospy.logerr("dbscan_lane_detector - Unable to generate hough lines.")
+            if self.generated_houghlines:
+                rospy.logerr("dbscan_lane_detector - Unable to generate hough lines.")
+                self.generated_houghlines = False
             self.offset_message.angular.z = 1
             self.center_offset_publisher.publish(self.offset_message)
             return
@@ -177,7 +185,9 @@ class DBScanLaneDetector:
             if self.display_desired_twist_image:
                 cv.imshow("Twist message visualization", grayscale_cv_image)
                 cv.waitKey(1)
-            rospy.logerr("dbscan_lane_detector - Unable to detect white pixels.")
+            if self.found_white_pixels:
+                rospy.logerr("dbscan_lane_detector - Unable to detect white pixels.")
+                self.found_white_pixels = False
             self.offset_message.angular.z = 1
             self.center_offset_publisher.publish(self.offset_message)
             return
