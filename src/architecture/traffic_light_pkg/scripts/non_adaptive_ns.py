@@ -3,6 +3,7 @@
 import rospy
 from dynamic_reconfigure.server import Server
 from std_msgs.msg import Bool, Duration
+from traffic_light_pkg.cfg import NonAdaptiveNSConfig
 
 MANUAL = 0
 CROSSWALK = 1
@@ -48,14 +49,22 @@ class NonAdaptiveNorthSouthLight:
     time_to_next_south_state: rospy.Duration
     time_of_last_state_change: rospy.Time
 
+    # TODO: THIS DOESN'T WORK!!! Both rospy.spin and while not is shutdown essentially
+    #   stop code from running in its tracks, and I can't figure out how to do multi-
+    #   threading to fix it. My idea is to have this run everything *exclusively* with
+    #   a callback function that will subscribe to a node that's *constantly* publishing
+    #   time, so that it *functions* like a "while rospy shutdown blah blah", but being
+    #   able to separate them into different nodes so that I can have my cake and eat it,
+    #   too.
+
     # ---------------------------------------
     # --------- Node State Methods ----------
     # ---------------------------------------
     def __init__(self):
         rospy.init_node("non_adaptive_ns_light", anonymous=True)
 
-        self.north_state_pub = rospy.Publisher("north/state", Bool, queue_size=10)
-        self.south_state_pub = rospy.Publisher("south/state", Bool, queue_size=10)
+        self.north_state_pub = rospy.Publisher("north/state", Bool, queue_size=1)
+        self.south_state_pub = rospy.Publisher("south/state", Bool, queue_size=1)
 
         self.north_time_to_next_state_pub = rospy.Publisher(
             "north/time_to_next_state", Duration, queue_size=1
@@ -63,6 +72,7 @@ class NonAdaptiveNorthSouthLight:
         self.south_time_to_next_state_pub = rospy.Publisher(
             "south/time_to_next_state", Duration, queue_size=1
         )
+        self.dyn_rcfg_srv = Server(NonAdaptiveNSConfig, self._dynamic_reconfig_callback)
 
         self.mode = CROSSWALK
 
@@ -76,11 +86,9 @@ class NonAdaptiveNorthSouthLight:
         self.green_duration = rospy.Duration(45, 0)
         self.red_duration = rospy.Duration(15, 0)
 
-        self.time_to_next_north_state = rospy.Duration(0, 0)
-        self.time_to_next_south_state = rospy.Duration(0, 0)
+        self.time_to_next_north_state = rospy.Duration(-1, 0)
+        self.time_to_next_south_state = rospy.Duration(-1, 0)
         self.time_of_last_state_change = rospy.Time.now()
-
-        rospy.spin()
 
     def _dynamic_reconfig_callback(self, config, _):
         self.mode = config.mode
@@ -98,6 +106,7 @@ class NonAdaptiveNorthSouthLight:
         Begin running this traffic light node.
         """
         while not rospy.is_shutdown():
+            rospy.loginfo(self.mode)
             if self.mode == MANUAL:
                 self._publish_manual()
             elif self.mode == CROSSWALK:
