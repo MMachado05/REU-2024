@@ -1,0 +1,21 @@
+<launch>
+  <node
+    name="rqt_console"
+    pkg="rqt_reconfigure"
+    type="rqt_reconfigure"
+    args="-t"
+  />
+  <node
+    name="traffic_light_controller"
+    pkg="traffic_light_pkg"
+    type="non_adaptive_ns_controller.py"
+    required="true"
+    output="screen"
+  >
+    <param name="mode_topic" type="str" value="mode" />
+    <param name="north_light_state_topic" type="str" value="north_light_state" />
+    <param name="south_light_state_topic" type="str" value="south_light_state" />
+    <param name="green_duration_topic" type="str" value="green_duration" />
+    <param name="red_duration_topic" type="str" value="red_duration" />
+  </node>
+</launch>
