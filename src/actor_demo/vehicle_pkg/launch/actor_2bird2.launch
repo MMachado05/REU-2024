@@ -39,7 +39,7 @@
 
 
     <!-- DBScan Lane Following -->
-    <node name="advanced_dbw_follow_lane" pkg="follow_line_pkg" type="advanced_dbw_follow_lane.py" required="true" output="screen">
+    <node name="advanced_dbw_follow_lane" pkg="follow_line_pkg" type="dbscan_bird_eye.py" required="true" output="screen">
         <param name="imgtopic_name" type="str" value="cam_pub/image_raw" />
     </node>
     <!-- ......................................................................... -->

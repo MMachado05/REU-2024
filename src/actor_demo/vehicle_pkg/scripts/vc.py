@@ -96,12 +96,12 @@ def time_to_state_cb(msg):
 def yellow_cb(y):
     global yellow
     yellow = y.data
-    motion()
 
 # angular speed callback
 def angle_cb(ang):
     global angle
     angle = ang.data
+    motion()
 
 # DYNAMIC SPEED ALGORITHM
 # compute distance to intersection and adjust speed if needed
