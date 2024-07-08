@@ -10,7 +10,6 @@ project(traffic_light_pkg)
 find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   roscpp
-  rospkg
   rospy
   sensor_msgs
   std_msgs
@@ -91,10 +90,9 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/NonAdaptiveNS.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
