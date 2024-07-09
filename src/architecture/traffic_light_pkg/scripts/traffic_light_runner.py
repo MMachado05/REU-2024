@@ -34,7 +34,7 @@ class TrafficLightRunner:
             now_ns = now_in_ns % 1_000_000_000
             now = Time(rospy.Time(now_s, now_ns))
             self.run_pub.publish(now)
-            time.sleep(0.2)
+            time.sleep(0.05)
 
 if __name__ == "__main__":
     try:
