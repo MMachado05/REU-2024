@@ -2,6 +2,7 @@
 
 import rospy
 from std_msgs.msg import Bool, Time, Int32
+from typing import Optional
 
 MANUAL = 0
 CROSSWALK = 1
@@ -15,6 +16,8 @@ MODE_INT_TO_STR = {
 
 GREEN = True
 RED = False
+
+STATE_BOOL_TO_STR = {GREEN: "GREEN", RED: "RED"}
 
 ZERO_DURATION = rospy.Duration(0)
 
@@ -57,7 +60,7 @@ class NonAdaptiveNorthSouthLight:
 
     time_to_next_north_state: rospy.Duration
     time_to_next_south_state: rospy.Duration
-    time_of_last_state_change: rospy.Time
+    time_of_last_state_change: Optional[rospy.Time]
 
     # ---------------------------------------
     # --------- Node State Methods ----------
@@ -78,10 +81,10 @@ class NonAdaptiveNorthSouthLight:
 
         self.time_to_next_north_state = rospy.Duration(-1, 0)
         self.time_to_next_south_state = rospy.Duration(-1, 0)
-        self.time_of_last_state_change = rospy.Time.now()
+        self.time_of_last_state_change = None
 
         self.run_sub = rospy.Subscriber(
-            rospy.get_param("~run_light_topic"), Bool, self._run
+            rospy.get_param("~run_light_topic"), Time, self._run
         )
 
         self.mode_sub = rospy.Subscriber(
@@ -114,8 +117,6 @@ class NonAdaptiveNorthSouthLight:
             "south/time_to_next_state", Time, queue_size=1
         )
 
-        rospy.spin()
-
     # -------------------------------------------------------
     # ------ Setters from external dynamic reconfigure ------
     # -------------------------------------------------------
@@ -128,6 +129,14 @@ class NonAdaptiveNorthSouthLight:
                     MODE_INT_TO_STR[self.mode], MODE_INT_TO_STR[mode.data]
                 )
             )
+            rospy.loginfo(
+                "non_adaptive_ns_light - North light is {}, south light is {}".format(
+                    STATE_BOOL_TO_STR[self.north_light_state],
+                    STATE_BOOL_TO_STR[self.south_light_state],
+                )
+            )
+            self.north_state_pub.publish(self.north_light_state)
+            self.south_state_pub.publish(self.south_light_state)
         self.mode = mode.data
 
     def _set_north_light_state(self, state: Bool):
@@ -145,22 +154,17 @@ class NonAdaptiveNorthSouthLight:
     # ----------------------------
     # -------- Node Logic --------
     # ----------------------------
-    def _run(self, run: Bool):
-        # Rewrite as run node?
-        if not run.data:
-            rospy.loginfo(
-                "non_adaptive_ns_light - Received shutdown message. Stopping..."
-            )
-            exit(0)
-
+    def _run(self, now: Time):
         if self.mode == MANUAL:
             self._publish_manual()
+            self.north_time_to_next_state_pub.publish(rospy.Duration(-10))
+            self.south_time_to_next_state_pub.publish(rospy.Duration(-10))
         elif self.mode == CROSSWALK:
-            self._publish_crosswalk()
+            self._publish_crosswalk(rospy.Time(now.data.secs, now.data.nsecs))
         elif self.mode == INTERSECTION:
             self._publish_intersection()
         else:
-            rospy.logfatal("non_adaptive_ns_light - Illegal mode.")
+            rospy.logfatal(f"non_adaptive_ns_light - Illegal mode <{self.mode}>.")
             exit(1)
 
     def _publish_manual(self):
@@ -177,11 +181,13 @@ class NonAdaptiveNorthSouthLight:
             self.south_state_pub.publish(Bool(GREEN))
             self.south_light_current_state = GREEN
         if self.south_light_state is RED and self.south_light_current_state is GREEN:
-            rospy.loginfo("non_adaptive_ns_light - Switching north light to red.")
+            rospy.loginfo("non_adaptive_ns_light - Switching south light to red.")
             self.south_state_pub.publish(Bool(RED))
             self.south_light_current_state = RED
 
-    def _publish_crosswalk(self):
+    def _publish_crosswalk(self, now: rospy.Time):
+        if self.time_of_last_state_change is None:
+            self.time_of_last_state_change = rospy.Time(now.secs, now.nsecs)
         # North and south are the same, so I picked arbitrarily here.
         if self.time_to_next_north_state <= ZERO_DURATION:
             # Checking <= for edge cases where subtracting time elapsed crosses
@@ -200,15 +206,20 @@ class NonAdaptiveNorthSouthLight:
                 self.time_to_next_south_state = self.green_duration
                 self.north_state_pub.publish(Bool(GREEN))
                 self.south_state_pub.publish(Bool(GREEN))
-            self.time_of_last_state_change = rospy.Time.now()
+            self.time_of_last_state_change = now
         else:
-            time_elapsed = rospy.Time.now() - self.time_of_last_state_change
-            self.time_to_next_north_state = self.time_to_next_north_state - (
-                time_elapsed
-            )
-            self.time_to_next_south_state = self.time_to_next_south_state - (
-                time_elapsed
-            )
+            time_elapsed_s = now.secs - self.time_of_last_state_change.secs
+            time_elapsed_ns = now.nsecs - self.time_of_last_state_change.nsecs
+            time_elapsed = rospy.Duration(time_elapsed_s, time_elapsed_ns)
+            if self.crosswalk_state == GREEN:
+                self.time_to_next_north_state = self.green_duration - time_elapsed
+                self.time_to_next_south_state = self.green_duration - time_elapsed
+            else:  # Can only be red
+                self.time_to_next_north_state = self.red_duration - time_elapsed
+                self.time_to_next_south_state = self.red_duration - time_elapsed
+            # TODO: I'm *confident* there is a much more efficient way to calculate this.
+            #       Something to do with the fact that time elapsed can be 0? I'll have to
+            #       try something tomorrow.
         self.north_time_to_next_state_pub.publish(self.time_to_next_north_state)
         self.south_time_to_next_state_pub.publish(self.time_to_next_south_state)
 
@@ -221,6 +232,7 @@ class NonAdaptiveNorthSouthLight:
 
 if __name__ == "__main__":
     try:
-        NonAdaptiveNorthSouthLight()
+        light = NonAdaptiveNorthSouthLight()
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
