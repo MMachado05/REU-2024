@@ -1,18 +1,22 @@
 <launch>
   <group ns="light">
     <node
-      name="rqt_console"
-      pkg="rqt_reconfigure"
-      type="rqt_reconfigure"
-      args="-t"
-    />
-    <node
-      name="traffic_light_controller"
+      name="traffic_runner"
       pkg="traffic_light_pkg"
-      type="non_adaptive_ns_controller.py"
+      type="traffic_light_runner.py"
       required="true"
       output="screen"
     >
+      <param name="run_light_topic" type="str" value="run" />
+    </node>
+    <node
+      name="traffic_light"
+      pkg="traffic_light_pkg"
+      type="non_adaptive_ns.py"
+      required="true"
+      output="screen"
+    >
+      <param name="run_light_topic" type="str" value="run" />
       <param name="mode_topic" type="str" value="mode" />
       <param name="north_light_state_topic" type="str" value="north_light_state" />
       <param name="south_light_state_topic" type="str" value="south_light_state" />
