@@ -78,7 +78,7 @@ class SimpleGazelleVC:
         """
         if not self.drive_on:
             if self.is_driving:
-                rospy.loginfo("simple_gazelle_vc - stopping vehicle")
+                rospy.loginfo("simple_gazelle_vc:81 - stopping vehicle")
                 self.is_driving = False
             self.velocity_msg.linear.x = 0.0
             self.velocity_msg.angular.z = 0.0
@@ -86,7 +86,7 @@ class SimpleGazelleVC:
             return
 
         if not self.is_driving:
-            rospy.loginfo("simple_gazelle_vc - starting vehicle")
+            rospy.loginfo("simple_gazelle_vc:89 - starting vehicle")
             self.is_driving = True
         self.velocity_msg.linear.x = self.speed
         self.velocity_msg.angular.z = -(
@@ -94,7 +94,7 @@ class SimpleGazelleVC:
             * self.twist_multiplier
         )
         # NOTE: Yes, these are swapped. Visually, here's why:
-        #   
+        #
         # What *we* see
         #    x
         #   ──┐
@@ -107,6 +107,7 @@ class SimpleGazelleVC:
         #              x
 
         self.velocity_publisher.publish(self.velocity_msg)
+
 
 if __name__ == "__main__":
     try:
