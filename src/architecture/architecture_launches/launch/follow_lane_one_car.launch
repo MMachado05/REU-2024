@@ -1,0 +1,149 @@
+<launch>
+  <!-- ============== -->
+  <!-- Node arguments -->
+  <!-- ============== -->
+  <arg name="vehicle" default="sim" />
+  <arg name="preprocessor" default="easy_birdseye" />
+  <arg name="lane_detector" default="dbscan" />
+  <arg name="vehicle_namespace" default="robot1" />
+
+  <!-- =============== -->
+  <!-- Topic arguments -->
+  <!-- =============== -->
+  <arg name="preprocessor_in_topic" default="camera/image_raw" />
+  <arg name="preprocessed_img_topic" default="lane_preprocessed_img" />
+  <arg name="lane_twist_topic" default="desired_twist" />
+
+  <!-- ======= -->
+  <!-- Vehicle -->
+  <!-- ======= -->
+  <!-- TODO: Add vehicle controllers, will need ULC for actors and camera IDs -->
+  <group if="$(eval arg('vehicle') == 'sim')">
+    <!-- Set up gazelle (comes with RQT Console set up) -->
+    <include file="$(find gazelle_sim_ltu_reu)/launch/ltu_reu.launch" />
+
+    <!-- Vehicle Controller -->
+    <group ns="$(arg vehicle_namespace)">
+      <node
+        name="vehicle_controller"
+        pkg="vehicle_controllers_pkg"
+        type="gazelle_noyellow_norsu_nogps_vc.py"
+        required="true"
+        output="screen"
+      >
+        <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
+        <param name="cmd_vel_out_topic" type="str" value="cmd_vel" />
+      </node>
+    </group>
+
+  </group>
+  <group if="$(eval arg('vehicle') == 'actor1')">
+    <arg name="vehicle_namespace" value="actor1" />
+
+    <group ns="$(arg vehicle_namespace)">
+      <!-- Set up camera -->
+      <include file="$(find simple_camera_publisher)/launch/camera_publisher.launch">
+        <arg name="source"
+          value="/dev/v4l/by-id/usb-Arducam_Technology_Co.__Ltd._USB_2.0_Camera_SN0001-video-index0" />
+      </include>
+
+      <!-- Vehicle Controller -->
+
+      <!-- Open RQT Console -->
+      <node
+        name="rqt_console"
+        pkg="rqt_reconfigure"
+        type="rqt_reconfigure"
+        args="-t"
+      >
+      </node>
+    </group>
+  </group>
+  <group if="$(eval arg('vehicle') == 'actor2')">
+    <arg name="vehicle_namespace" value="actor2" />
+
+    <group ns="$(arg vehicle_namespace)">
+      <!-- Set up camera -->
+      <include file="$(find simple_camera_publisher)/launch/camera_publisher.launch">
+        <arg name="source"
+          value="/dev/v4l/by-id/usb-Sonix_Technology_Co.__Ltd._USB_2.0_Camera_SN0001-video-index0" />
+      </include>
+
+      <!-- Vehicle Controller -->
+
+      <!-- Open RQT Console -->
+      <node
+        name="rqt_console"
+        pkg="rqt_reconfigure"
+        type="rqt_reconfigure"
+        args="-t"
+      >
+      </node>
+    </group>
+  </group>
+
+  <!-- ============ -->
+  <!-- Preprocessor -->
+  <!-- ============ -->
+  <group if="$(eval arg('preprocessor') == 'easy_birdseye')">
+    <group ns="$(arg vehicle_namespace)">
+      <node
+        name="lane_following_preprocessor"
+        pkg="preprocessors_pkg"
+        type="easy_birdseye_preprocessor.py"
+        required="true"
+        output="screen"
+      >
+        <param name="img_in_topic" type="str" value="$(arg preprocessor_in_topic)" />
+        <param name="img_out_topic" type="str" value="$(arg preprocessed_img_topic)" />
+      </node>
+    </group>
+  </group>
+  <group if="$(eval arg('preprocessor') == 'full')">
+    <group ns="$(arg vehicle_namespace)">
+      <node
+        name="lane_following_preprocessor"
+        pkg="preprocessors_pkg"
+        type="preprocessor.py"
+        required="true"
+        output="screen"
+      >
+        <param name="img_in_topic" type="str" value="$(arg preprocessor_in_topic)" />
+        <param name="img_out_topic" type="str" value="$(arg preprocessed_img_topic)" />
+      </node>
+    </group>
+  </group>
+
+  <!-- ============= -->
+  <!-- Lane detector -->
+  <!-- ============= -->
+  <group if="$(eval arg('lane_detector') == 'dbscan')">
+    <group ns="$(arg vehicle_namespace)">
+      <node
+        name="lane_detector"
+        pkg="lane_detectors_pkg"
+        type="dbscan_lane_detector.py"
+        required="true"
+        output="screen"
+      >
+        <param name="img_in_topic" type="str" value="$(arg preprocessed_img_topic)" />
+        <param name="desired_twist_out_topic" type="str" value="$(arg lane_twist_topic)" />
+      </node>
+    </group>
+  </group>
+  <group if="$(eval arg('lane_detector') == 'kmeans')">
+    <group ns="$(arg vehicle_namespace)">
+      <node
+        name="lane_detector"
+        pkg="lane_detectors_pkg"
+        type="kmeans_lane_detector.py"
+        required="true"
+        output="screen"
+      >
+        <param name="img_in_topic" type="str" value="$(arg preprocessed_img_topic)" />
+        <param name="desired_twist_out_topic" type="str" value="$(arg lane_twist_topic)" />
+      </node>
+    </group>
+  </group>
+
+</launch>
