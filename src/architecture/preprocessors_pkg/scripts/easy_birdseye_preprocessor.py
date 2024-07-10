@@ -103,9 +103,6 @@ class EasyBirdseyeImagePreprocessor:
         self.rosimg_cv_bridge = CvBridge()
         self.image_is_displaying = False
 
-        # Begin preprocessing
-        rospy.spin()
-
     def _dynamic_reconfig_callback(self, config, _):
         """
         Callback function for dynamic reconfigure.
@@ -251,6 +248,7 @@ class EasyBirdseyeImagePreprocessor:
 
 if __name__ == "__main__":
     try:
-        EasyBirdseyeImagePreprocessor()
+        preprocessor = EasyBirdseyeImagePreprocessor()
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass

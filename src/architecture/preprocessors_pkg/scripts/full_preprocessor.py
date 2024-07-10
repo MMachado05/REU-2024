@@ -8,7 +8,7 @@ import cv2 as cv
 import numpy as np
 
 
-class ROSImagePreprocessor:
+class FullImagePreprocessor:
     """
     A ROS node for preparing images for line detection and lane
     following.
@@ -113,9 +113,6 @@ class ROSImagePreprocessor:
 
         # Misc.
         self.rosimg_cv_bridge = CvBridge()
-
-        # Begin preprocessing
-        rospy.spin()
 
     def _dynamic_reconfig_callback(self, config, _):
         """
@@ -268,6 +265,7 @@ class ROSImagePreprocessor:
 
 if __name__ == "__main__":
     try:
-        ROSImagePreprocessor()
+        preprocessor = FullImagePreprocessor()
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
