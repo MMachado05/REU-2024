@@ -63,60 +63,7 @@
         >
         <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
         <param name="cmd_vel_out_topic" type="str" value="cmd_vel" />
-        </node>
-
-        <!-- ============ -->
-        <!-- Preprocessor -->
-        <!-- ============ -->
-
-        <node
-        name="lane_following_preprocessor"
-        pkg="preprocessors_pkg"
-        type="$(arg preprocessor)_preprocessor.py"
-        required="true"
-        output="screen"
-        >
-        <param name="img_in_topic" type="str" value="$(arg preprocessor_in_topic)" />
-        <param name="img_out_topic" type="str" value="$(arg preprocessed_img_topic)" />
-        </node>
-
-        <!-- ============= -->
-        <!-- Lane detector -->
-        <!-- ============= -->
-
-        <node
-        name="lane_detector"
-        pkg="lane_detectors_pkg"
-        type="$(arg lane_detector)_lane_detector.py"
-        required="true"
-        output="screen"
-        >
-        <param name="img_in_topic" type="str" value="$(arg preprocessed_img_topic)" />
-        <param name="desired_twist_out_topic" type="str" value="$(arg lane_twist_topic)" />
-        </node>
-    </group>
-
-    <group ns="robot2">
-        <!-- Robot Information -->
-
-        <rosparam command="load" file="$(find v2x_simulator)/robot/ACTor.yaml" />
-        <rosparam>
-            Xr_init: 16.69
-            Yr_init: 4.20
-            Theta_init: deg(180.0)
-        </rosparam>
-
-        <!-- Vehicle Controller -->
-
-        <node
-        name="final_gazelle_v2x_vc"
-        pkg="vehicle_controllers_pkg"
-        type="final_gazelle_v2x_vc.py"
-        required="true"
-        output="screen"
-        >
-        <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
-        <param name="cmd_vel_out_topic" type="str" value="cmd_vel" />
+        <param name="lane_name" type="str" value="south"/>
         </node>
 
         <!-- ============ -->
@@ -159,7 +106,90 @@
         pkg="preprocessors_pkg"
         type="crop_only_preprocessor.py"
         required="true"
-        ouput="screen"
+        output="screen"
+        >
+        <param name="img_in_topic" type="str" value="$(arg preprocessor_in_topic)" />
+        <param name="img_out_topic" type="str" value="cropped_img" />
+        </node>
+
+        <!-- Yellow Node-->
+        <node
+        name="full_yellow_detector"
+        pkg="yellow_detectors_pkg"
+        type="full_yellow_detector.py"
+        required="true"
+        output="screen"
+        >
+        <param name="img_in_topic" type="str" value="cropped_img" />
+        <param name="decision_out_topic" type="str" value="yellow_detected" />
+        </node>
+    </group>
+
+    <group ns="robot2">
+        <!-- Robot Information -->
+
+        <rosparam command="load" file="$(find v2x_simulator)/robot/ACTor.yaml" />
+        <rosparam>
+            Xr_init: 16.69
+            Yr_init: 4.20
+            Theta_init: deg(180.0)
+        </rosparam>
+
+        <!-- Vehicle Controller -->
+
+        <node
+        name="final_gazelle_v2x_vc"
+        pkg="vehicle_controllers_pkg"
+        type="final_gazelle_v2x_vc.py"
+        required="true"
+        output="screen"
+        >
+        <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
+        <param name="cmd_vel_out_topic" type="str" value="cmd_vel" />
+        <param name="lane_name" type="str" value="north"/>
+        </node>
+
+        <!-- ============ -->
+        <!-- Preprocessor -->
+        <!-- ============ -->
+
+        <node
+        name="lane_following_preprocessor"
+        pkg="preprocessors_pkg"
+        type="$(arg preprocessor)_preprocessor.py"
+        required="true"
+        output="screen"
+        >
+        <param name="img_in_topic" type="str" value="$(arg preprocessor_in_topic)" />
+        <param name="img_out_topic" type="str" value="$(arg preprocessed_img_topic)" />
+        </node>
+
+        <!-- ============= -->
+        <!-- Lane detector -->
+        <!-- ============= -->
+
+        <node
+        name="lane_detector"
+        pkg="lane_detectors_pkg"
+        type="$(arg lane_detector)_lane_detector.py"
+        required="true"
+        output="screen"
+        >
+        <param name="img_in_topic" type="str" value="$(arg preprocessed_img_topic)" />
+        <param name="desired_twist_out_topic" type="str" value="$(arg lane_twist_topic)" />
+        </node>
+
+        <!-- ============= -->
+        <!-- Yellow Detect -->
+        <!-- ============= -->
+
+        <!-- Crop Preprocessing -->
+        <node
+        name="crop_only_line_detection_preprocessor"
+        pkg="preprocessors_pkg"
+        type="crop_only_preprocessor.py"
+        required="true"
+        output="screen"
         >
         <param name="img_in_topic" type="str" value="$(arg preprocessor_in_topic)" />
         <param name="img_out_topic" type="str" value="cropped_img" />
