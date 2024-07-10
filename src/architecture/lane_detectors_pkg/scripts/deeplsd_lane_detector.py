@@ -2,23 +2,21 @@
 import rospy
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
+from cv_bridge import CvBridge, CvBridgeError
 from DeepLSD.deeplsd.models.deeplsd_inference import DeepLSD
 from sklearn.cluster import DBSCAN
 import cv2 as cv
 import numpy as np
 import math
 import torch
+import time
 
 # from dynamic_reconfigure.server import Server
 # from lane_detectors_pkg.cfg import ...  # packageName.cfg
 
-class TemplateLaneDetector:
+class DeepLSDLaneDetector:
     """
-    This is a template file you can copy to create new lane-detecting nodes.
-
-    You'll need to add new imports, message types, parameters, etc. as you see fit.
-
-    Be sure to replace "template" whereever you see it!
+    A lane dector using DeepLSD.
     """
 
     preprocessed_img_subscriber: rospy.Subscriber
@@ -42,22 +40,10 @@ class TemplateLaneDetector:
         self.center_offset_publisher = rospy.Publisher(
             rospy.get_param("~desired_twist_out_topic"), Twist, queue_size=1
         )
-        # self.dyn_rcfg_srv = Server(
-        #     ..., self._dynamic_reconfig_callback
-        # )
 
         self.offset_message = Twist()
-
-    # def _dynamic_reconfig_callback(self, config, _):
-    #     """
-    #     Callback function for dynamic reconfigure.
-    #
-    #     Parameters
-    #     ----------
-    #     config : DBScanLaneDetectorConfig
-    #         The new dynamic reconfigure parameters.
-    #     """
-    #     return config
+        self.rosimg_cv_bridge = CvBridge()
+        self.last_processed_time = 0
 
     # ---------------------------------------
     # ----------- Lane detection ------------
@@ -80,6 +66,23 @@ class TemplateLaneDetector:
             The preprocessed image to detect the lane in.
         """
         # TODO: Implement this!
+        try:
+            current_time = time.time()
+            if current_time - self.last_processed_time >= 0.25:
+                self.last_processed_time = current_time
+                grayscale_cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(
+                    ros_image
+                )  # passthrough
+                grayscale_cv_image = grayscale_cv_image.copy()
+                ros_image = cv.cvtColor(grayscale_cv_image, cv.COLOR_GRAY2BGR)
+            else:
+                return
+        except CvBridgeError as e:
+            rospy.logerr(f"largest_contour_lane_detector:109 - CvBridge Error: {e}")
+            self.offset_message.angular.z = 3
+            self.center_offset_publisher.publish(self.offset_message)
+            return
+        
         rows, cols, _ = ros_image.shape
 
         # draw horizontal lines to improve curve detection using DeepLSD
@@ -133,7 +136,7 @@ class TemplateLaneDetector:
 
         # UNSUPERVISED LEARNING USING DBSCAN
         # find clusters using dbscan density based clustering
-        dbscan = DBSCAN(eps=150, min_samples=2)
+        dbscan = DBSCAN(eps=100, min_samples=2)
         clusters = dbscan.fit_predict(points)
 
         # get the two clusters closest to bottom with certain minimum size
@@ -167,10 +170,10 @@ class TemplateLaneDetector:
             for p in lane_points:
                 cv.circle(image2, (int(p[0]), int(p[1])), 5, (0, 255, 0), 2)
             if centroid_x < (cols // 2):
-                cx = (cols // 2 + 100)
+                desired_midpoint_x = (cols // 2 + 100)
             else:
-                cx = (cols // 2 - 100)
-            cy = rows // 2
+                desired_midpoint_x = (cols // 2 - 100)
+            desired_midpoint_y = rows // 2
 
         # if two clusters, find center of both
         else:
@@ -193,7 +196,7 @@ class TemplateLaneDetector:
             desired_midpoint_x = int(np.mean(lane_centroids_x))
             desired_midpoint_y = int(np.mean(lane_centroids_y))
 
-        cv.arrowedLine(image2, (cols//2,rows-1), (cx,cy), (255, 255, 255), 2)
+        cv.arrowedLine(image2, (cols//2,rows-1), (desired_midpoint_x,desired_midpoint_y), (255, 255, 255), 2)
         cv.imshow("lanes", image2)
         cv.waitKey(3)
 
@@ -225,7 +228,7 @@ if __name__ == "__main__":
         net = DeepLSD(conf)
         net.load_state_dict(ckpt['model'])
         net = net.to(device).eval()
-        detector = TemplateLaneDetector()
+        detector = DeepLSDLaneDetector()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
