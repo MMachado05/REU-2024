@@ -129,32 +129,22 @@
   <!-- Preprocessor -->
   <!-- ============ -->
   <group ns="$(arg vehicle_namespace)">
-    <node
-      name="lane_following_preprocessor"
-      pkg="preprocessors_pkg"
-      type="$(arg preprocessor)_preprocessor.py"
-      required="true"
-      output="screen"
-    >
-      <param name="img_in_topic" type="str" value="$(arg preprocessor_in_topic)" />
-      <param name="img_out_topic" type="str" value="$(arg preprocessed_img_topic)" />
-    </node>
+    <include file="$(find architecture_launches)/launch/packages/preprocessor.launch">
+      <arg name="preprocessor" value="$(arg preprocessor)" />
+      <arg name="preprocessor_in_topic" value="$(arg preprocessor_in_topic)" />
+      <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
+    </include>
   </group>
 
   <!-- ============= -->
   <!-- Lane detector -->
   <!-- ============= -->
   <group ns="$(arg vehicle_namespace)">
-    <node
-      name="lane_detector"
-      pkg="lane_detectors_pkg"
-      type="$(arg lane_detector)_lane_detector.py"
-      required="true"
-      output="screen"
-    >
-      <param name="img_in_topic" type="str" value="$(arg preprocessed_img_topic)" />
-      <param name="desired_twist_out_topic" type="str" value="$(arg lane_twist_topic)" />
-    </node>
+    <include file="$(find architecture_launches)/launch/packages/lane_detector.launch">
+      <arg name="lane_detector" value="$(arg lane_detector)" />
+      <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
+      <arg name="lane_twist_topic" value="$(arg lane_twist_topic)" />
+    </include>
   </group>
 
 </launch>

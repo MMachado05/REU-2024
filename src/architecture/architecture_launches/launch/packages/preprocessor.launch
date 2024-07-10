@@ -1,0 +1,16 @@
+<launch>
+  <arg name="preprocessor" default="" />
+  <arg name="preprocessor_in_topic" default="" />
+  <arg name="preprocessed_img_topic" default="" />
+
+  <node
+    name="lane_following_preprocessor"
+    pkg="preprocessors_pkg"
+    type="$(arg preprocessor)_preprocessor.py"
+    required="true"
+    output="screen"
+  >
+    <param name="img_in_topic" type="str" value="$(arg preprocessor_in_topic)" />
+    <param name="img_out_topic" type="str" value="$(arg preprocessed_img_topic)" />
+  </node>
+</launch>
