@@ -14,14 +14,14 @@ class NonAdaptiveNorthSouthLightController:
     dyn_rcfg_srv: Server
 
     mode_pub: rospy.Publisher
-    north_light_state_pub: rospy.Publisher
-    south_light_state_pub: rospy.Publisher
+    northbound_light_state_pub: rospy.Publisher
+    eastbound_light_state_pub: rospy.Publisher
     green_duration_pub: rospy.Publisher
     red_duration_pub: rospy.Publisher
 
     mode: int
-    north_light_state: bool
-    south_light_state: bool
+    northbound_light_state: bool
+    eastbound_light_state: bool
     green_duration: int
     red_duration: int
 
@@ -31,11 +31,11 @@ class NonAdaptiveNorthSouthLightController:
         self.mode_pub = rospy.Publisher(
             rospy.get_param("~mode_topic"), Int32, queue_size=1
         )
-        self.north_light_state_pub = rospy.Publisher(
-            rospy.get_param("~north_light_state_topic"), Bool, queue_size=1
+        self.northbound_light_state_pub = rospy.Publisher(
+            rospy.get_param("~northbound_light_state_topic"), Bool, queue_size=1
         )
-        self.south_light_state_pub = rospy.Publisher(
-            rospy.get_param("~south_light_state_topic"), Bool, queue_size=1
+        self.eastbound_light_state_pub = rospy.Publisher(
+            rospy.get_param("~eastbound_light_state_topic"), Bool, queue_size=1
         )
         self.green_duration_pub = rospy.Publisher(
             rospy.get_param("~green_duration_topic"), Int32, queue_size=1
@@ -50,14 +50,14 @@ class NonAdaptiveNorthSouthLightController:
         )
 
         self.mode = 1
-        self.north_light_state = True
-        self.south_light_state = True
+        self.northbound_light_state = True
+        self.eastbound_light_state = True
         self.green_duration = 45
         self.red_duration = 15
 
         self.mode_pub.publish(self.mode)
-        self.north_light_state_pub.publish(self.north_light_state)
-        self.south_light_state_pub.publish(self.south_light_state)
+        self.northbound_light_state_pub.publish(self.northbound_light_state)
+        self.eastbound_light_state_pub.publish(self.eastbound_light_state)
         self.green_duration_pub.publish(self.green_duration)
         self.red_duration_pub.publish(self.red_duration)
 
@@ -65,14 +65,14 @@ class NonAdaptiveNorthSouthLightController:
 
     def _push_traffic_light_params(self, config, _):
         self.mode = config.mode
-        self.north_light_state = config.north_green_light_on
-        self.south_light_state = config.south_green_light_on
+        self.northbound_light_state = config.northbound_green_light_on
+        self.eastbound_light_state = config.eastbound_green_light_on
         self.green_duration = config.green_duration
         self.red_duration = config.red_duration
 
         self.mode_pub.publish(self.mode)
-        self.north_light_state_pub.publish(self.north_light_state)
-        self.south_light_state_pub.publish(self.south_light_state)
+        self.northbound_light_state_pub.publish(self.northbound_light_state)
+        self.eastbound_light_state_pub.publish(self.eastbound_light_state)
         self.green_duration_pub.publish(self.green_duration)
         self.red_duration_pub.publish(self.red_duration)
         return config
