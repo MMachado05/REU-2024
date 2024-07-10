@@ -151,9 +151,7 @@ class SimpleULCVC:
         #           ───────┘
         #              x
 
-        self.speed_msg.linear_velocity = round(
-            (self.speed / 2.237), 3
-        )  # Convert mph to m/s
+        self.speed_msg.linear_velocity = self.speed
         self._prep_steering_angle(turn_angle)
 
         self.ulc_speed_publisher.publish(self.speed_msg)
