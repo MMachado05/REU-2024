@@ -1,0 +1,8 @@
+56c56
+<     contents = yaml.load(f)
+---
+>     contents = yaml.safe_load(f)
+91c91
+<     contents = yaml.load(f)
+---
+>     contents = yaml.safe_load(f)
