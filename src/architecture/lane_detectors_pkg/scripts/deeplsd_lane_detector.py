@@ -109,9 +109,25 @@ class DeepLSDLaneDetector:
             out = net(inputs)
             pred_lines = out['lines'][0]
 
+        def extend(line, factor=2):
+            x1, y1 = line[0]
+            x2, y2 = line[1]
+            
+            # Calculate the direction of the line
+            dx = x2 - x1
+            dy = y2 - y1
+            
+            # Extend the line by the factor in both directions
+            x1_extended = x1 - factor * dx
+            y1_extended = y1 - factor * dy
+            x2_extended = x2 + factor * dx
+            y2_extended = y2 + factor * dy
+            
+            return [(int(x1_extended), int(y1_extended)), (int(x2_extended), int(y2_extended))]
+
+
         # Filter lines by slope and length
         filtered_lines = []
-        points = []
         for line in pred_lines:
             if len(line) == 2:
                 x1, y1 = line[0]
@@ -123,20 +139,34 @@ class DeepLSDLaneDetector:
                     
                     # Filter based on slope and length
                     line_length = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-                    min_slope = 0.3 
+                    min_slope = 0.4
                     min_length = 10
                     
                     if abs(slope) > min_slope and line_length > min_length:
-                        filtered_lines.append(line)
-                        points.append((x1, y1))
-                        points.append((x2, y2))
-                        cv.line(image2, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
-        
-        points = np.array(points)
+
+                        extend_factor = 1.3
+                        x1_extended = int(x1 - (x2 - x1) * (extend_factor))
+                        y1_extended = int(y1 - (y2 - y1) * (extend_factor))
+                        x2_extended = int(x2 + (x2 - x1) * (extend_factor))
+                        y2_extended = int(y2 + (y2 - y1) * (extend_factor))
+                        filtered_lines.append([(x1_extended, y1_extended), (x2_extended, y2_extended)])
+                        cv.line(image2, (int(x1_extended), int(y1_extended)), (int(x2_extended), int(y2_extended)), (0, 0, 255), 2)
+
+        def get_red_pixels(image):
+            # Create a mask for red color in BGR
+            red_mask = cv.inRange(image, (0, 0, 255), (0, 0, 255))
+            
+            # Extract red pixels' coordinates
+            red_pixels = np.column_stack(np.where(red_mask > 0))
+            return red_pixels
+    
+        points = get_red_pixels(image2)
+        downsample_factor = int(len(points) / (0.03 * len(points)))
+        points = points[::downsample_factor]   
 
         # UNSUPERVISED LEARNING USING DBSCAN
         # find clusters using dbscan density based clustering
-        dbscan = DBSCAN(eps=100, min_samples=2)
+        dbscan = DBSCAN(eps=70, min_samples=2)
         clusters = dbscan.fit_predict(points)
 
         # get the two clusters closest to bottom with certain minimum size
@@ -150,7 +180,7 @@ class DeepLSDLaneDetector:
             cluster_points = points[clusters == label]
 
             if len(cluster_points) >= 4:
-                centroid_y = np.max(cluster_points[:, 1])
+                centroid_y = np.max(cluster_points[:, 0])
                 valid_clusters.append((label, centroid_y))
 
         sorted_clusters = sorted(valid_clusters, key=lambda x: x[1], reverse=True)[:2]
@@ -165,10 +195,10 @@ class DeepLSDLaneDetector:
         # if only one cluster detected
         elif len(largest_labels) == 1:
             lane_points = points[clusters == largest_labels[0]]
-            centroid_x = np.mean(lane_points[:, 0])  # Mean of x-coordinates
-            centroid_y = np.mean(lane_points[:, 1])  # Mean of y-coordinates
+            centroid_x = np.mean(lane_points[:, 1])  # Mean of x-coordinates
+            centroid_y = np.mean(lane_points[:, 0])  # Mean of y-coordinates
             for p in lane_points:
-                cv.circle(image2, (int(p[0]), int(p[1])), 5, (0, 255, 0), 2)
+                cv.circle(image2, (int(p[1]), int(p[0])), 5, (0, 255, 0), 2)
             if centroid_x < (cols // 2):
                 desired_midpoint_x = (cols // 2 + 100)
             else:
@@ -185,10 +215,10 @@ class DeepLSDLaneDetector:
                 lane_points = lane_points[np.argsort(lane_points[:, 1])]
                 
                 for p in lane_points:
-                    cv.circle(image2, (int(p[0]), int(p[1])), 5, label_to_color[label], 2)
+                    cv.circle(image2, (int(p[1]), int(p[0])), 5, label_to_color[label], 2)
                 
-                centroid_x = np.mean(lane_points[:, 0]) 
-                centroid_y = np.mean(lane_points[:, 1]) 
+                centroid_x = np.mean(lane_points[:, 1]) 
+                centroid_y = np.mean(lane_points[:, 0]) 
                 lane_centroids_x.append(centroid_x)
                 lane_centroids_y.append(centroid_y)
 
