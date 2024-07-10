@@ -1,0 +1,16 @@
+<launch>
+  <arg name="lane_detector" default="" />
+  <arg name="preprocessed_img_topic" default="" />
+  <arg name="lane_twist_topic" default="" />
+
+  <node
+    name="lane_detector"
+    pkg="lane_detectors_pkg"
+    type="$(arg lane_detector)_lane_detector.py"
+    required="true"
+    output="screen"
+  >
+    <param name="img_in_topic" type="str" value="$(arg preprocessed_img_topic)" />
+    <param name="desired_twist_out_topic" type="str" value="$(arg lane_twist_topic)" />
+  </node>
+</launch>
