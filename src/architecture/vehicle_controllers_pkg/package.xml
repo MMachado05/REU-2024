@@ -49,21 +49,18 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>dataspeed_ulc_msgs</build_depend>
   <build_depend>dbw_polaris_msgs</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-  <build_export_depend>dataspeed_ulc_msgs</build_export_depend>
   <build_export_depend>dbw_polaris_msgs</build_export_depend>
   <build_export_depend>dynamic_reconfigure</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
-  <exec_depend>dataspeed_ulc_msgs</exec_depend>
   <exec_depend>dbw_polaris_msgs</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>

@@ -8,7 +8,6 @@ project(vehicle_controllers_pkg)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  dataspeed_ulc_msgs
   dbw_polaris_msgs
   dynamic_reconfigure
   geometry_msgs
