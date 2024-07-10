@@ -8,10 +8,10 @@ import cv2 as cv
 # TODO: Add any imports that the implementation will need
 
 from dynamic_reconfigure.server import Server
-from lane_detectors_pkg.cfg import LargestContourLaneDetectorConfig  # packageName.cfg
+from lane_detectors_pkg.cfg import BirdseyeLaneDetectorConfig  # packageName.cfg
 
 
-class LargestContourLaneDetector:
+class BirdseyeLaneDetector:
     """
     K-means lane detector node.
 
@@ -48,7 +48,7 @@ class LargestContourLaneDetector:
             rospy.get_param("~desired_twist_out_topic"), Twist, queue_size=1
         )
         self.dyn_rcfg_srv = Server(
-            LargestContourLaneDetectorConfig, self._dynamic_reconfig_callback
+            BirdseyeLaneDetectorConfig, self._dynamic_reconfig_callback
         )
 
         # Initially-set dynamic reconfigure parameters
@@ -122,7 +122,7 @@ class LargestContourLaneDetector:
 
 if __name__ == "__main__":
     try:
-        detector = LargestContourLaneDetector()
+        detector = BirdseyeLaneDetector()
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
