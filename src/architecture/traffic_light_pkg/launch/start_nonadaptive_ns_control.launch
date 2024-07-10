@@ -14,8 +14,8 @@
       output="screen"
     >
       <param name="mode_topic" type="str" value="mode" />
-      <param name="north_light_state_topic" type="str" value="north_light_state" />
-      <param name="south_light_state_topic" type="str" value="south_light_state" />
+      <param name="northbound_light_state_topic" type="str" value="northbound_light_state" />
+      <param name="eastbound_light_state_topic" type="str" value="eastbound_light_state" />
       <param name="green_duration_topic" type="str" value="green_duration" />
       <param name="red_duration_topic" type="str" value="red_duration" />
     </node>
