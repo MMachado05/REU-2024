@@ -88,6 +88,7 @@ class BirdseyeLaneDetector:
         
         self.thresh = config.thresh
         self.pers = config.pers
+        self.width = config.pers_width
         self.crop_hor = config.crop_lines_hor
         self.crop_ver = config.crop_lines_ver
         self.crop_orig = config.crop_orig
@@ -99,15 +100,15 @@ class BirdseyeLaneDetector:
         rows, cols, _ = img.shape
         
         p1 = [0, 0]
-        p2 = [cols//2, 0]
-        p3 = [cols//2 - int(cols * self.pers), rows]
+        p2 = [int(cols * self.width), 0]
+        p3 = [int(cols * self.width) - int(cols * self.pers), rows]
         p4 = [int(cols * self.pers), rows]
         
         per1 = np.float32([[0, 0], [cols, 0], [cols, rows], [0, rows]])
         per2 = np.float32([p1, p2, p3, p4])
         
         matrix = cv.getPerspectiveTransform(per1, per2)
-        result = cv.warpPerspective(img, matrix, (cols//2, rows))
+        result = cv.warpPerspective(img, matrix, (int(cols * self.width), rows))
         return result
 
     # ---------------------------------------
