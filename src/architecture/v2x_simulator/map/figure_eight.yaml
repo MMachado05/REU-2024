@@ -1,0 +1,11 @@
+# Field image file name
+field_image_file: '8shape.jpg'
+
+# Image file scaling and center
+pixels_per_meter: 24.0
+x_center_img: 1050
+y_center_img: 3100
+img_view_scale: 0.6
+
+north_angle: deg(45)
+
