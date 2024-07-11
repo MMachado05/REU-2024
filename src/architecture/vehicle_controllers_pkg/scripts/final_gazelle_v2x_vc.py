@@ -69,6 +69,16 @@ def time_to_state_cb(msg):
     global time_left, vel
     time_left = float(str(msg.data.secs) + '.' + str(msg.data.nsecs))
 
+    # EXCEPTION HANDLING
+    # ERROR IN RSU NODES, CAUSES THIS TOPIC TO NO RUNNING THE CB
+    
+    # rospy.loginfo("i'm getting called!!!")
+
+    # try:
+    #     pass
+    # except Exception as e:
+    #     rospy.logerr('Exception in callback')
+
 def light_state_cb(msg):
     global current_light_state, state, vel
     current_light_state = msg.data
@@ -204,6 +214,7 @@ def open_traffic_light_images():
 
     green_img = cv2.imread(green_img_path)
     red_img = cv2.imread(red_img_path)
+
 
     try:
         green_img_msg = bridge.cv2_to_imgmsg(green_img, "bgr8")
