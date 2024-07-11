@@ -4,12 +4,15 @@ import rospkg
 import yaml
 import rospy
 import math
+import cv2
 
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32, Time, Bool
+from sensor_msgs.msg import Image
 from nav_msgs.msg import Odometry
 from dynamic_reconfigure.server import Server
 from vehicle_controllers_pkg.cfg import GazelleNoYNoRNoGConfig
+from cv_bridge import CvBridge, CvBridgeError
 
 lane_twist_subscriber: rospy.Subscriber
 velocity_publisher: rospy.Publisher
@@ -22,6 +25,7 @@ twist_multiplier = 1.0
 is_driving = False
 
 velocity_msg = Twist()
+bridge = CvBridge()
 
 di = None
 curent_pose = None
@@ -71,8 +75,10 @@ def light_state_cb(msg):
 
     if current_light_state:
         state = 'GREEN'
+        light_state_img_pub.publish(green_img_msg)
     else:
         state = 'RED'
+        light_state_img_pub.publish(red_img_msg)
 
     vel = calculate_speed_to_intersection()
 
@@ -144,27 +150,8 @@ def calculate_speed_to_intersection():
             else:
                 v = d_int / (green_duration + red_duration + time_tolerance)
 
-
-
-
-
-
-
-        # if d > (d_int_end): # if we are going to make the light in the intersection
-        #     v = speed
-        # else:
-        #     d = speed * (green_duration + red_duration)
-
-        #     if d > d_int_end:
-        #         v = d_int_end / (green_duration + red_duration + time_tolerance)
-        #     else:
-        #         v = speed
-        
-        # v = speed
-
-
+    
     rospy.loginfo(f'\n state: {state} \n dist to intersection: {d_int} \n dist to int end: {d_int_end} \n dist calc: {d} \n orginal speed: {speed} \n calculated speed: {v} \n\n')
-
     return v
         
 def follow_lane_cb(lane_twist_msg):
@@ -189,6 +176,45 @@ def follow_lane_cb(lane_twist_msg):
 
     velocity_publisher.publish(velocity_msg)
 
+def open_waypoints():
+    global intersections, waypoints
+
+    rospack = rospkg.RosPack()
+    package_path = rospack.get_path('v2x_simulator')
+    yaml_file_path = f"{package_path}/waypoints/{lane_name}.yaml"
+
+    # load waypoints from the YAML file
+    with open(yaml_file_path, 'r') as file:
+        config = yaml.safe_load(file)
+
+    # intersection and waypoint positions from YAML
+    intersections = config['intersections']
+    waypoints = config['waypoints']
+
+    return
+
+def open_traffic_light_images():
+    global green_img_msg, red_img_msg
+
+    rospack = rospkg.RosPack()
+    package_path = rospack.get_path('v2x_simulator')
+
+    green_img_path = f"{package_path}/pics/green_traffic_light.png"
+    red_img_path = f"{package_path}/pics/red_traffic_light.png"
+
+    green_img = cv2.imread(green_img_path)
+    red_img = cv2.imread(red_img_path)
+
+    try:
+        green_img_msg = bridge.cv2_to_imgmsg(green_img, "bgr8")
+        red_img_msg = bridge.cv2_to_imgmsg(red_img, "bgr8")
+    except CvBridgeError as e:
+        rospy.logerr(f'Error: {e}')
+        return
+    
+    return
+
+
 if __name__ == "__main__":
     rospy.init_node("final_gazelle_v2x_vc")
 
@@ -204,24 +230,16 @@ if __name__ == "__main__":
     time_to_next_state_sub = rospy.Subscriber(f'/light/{lane_name}/time_to_next_state', Time, time_to_state_cb)
     light_state_sub = rospy.Subscriber(f'/light/{lane_name}/state', Bool, light_state_cb)
     odom_sub = rospy.Subscriber("odom", Odometry, pose_cb)
-
+    
     # Publishers
     velocity_publisher = rospy.Publisher(cmd_vel_out_topic, Twist, queue_size=1)
+    light_state_img_pub = rospy.Publisher(f'/light/{lane_name}/image', Image, queue_size=1)
 
     # Dynamic reconfigure
     dyn_rcfg_srv = Server(GazelleNoYNoRNoGConfig, dyn_rcfg_cb)
 
-    rospack = rospkg.RosPack()
-    package_path = rospack.get_path('v2x_simulator')
-    yaml_file_path = f"{package_path}/waypoints/{lane_name}.yaml"
-
-    # load waypoints from the YAML file
-    with open(yaml_file_path, 'r') as file:
-        config = yaml.safe_load(file)
-
-    # intersection and waypoint positions from YAML
-    intersections = config['intersections']
-    waypoints = config['waypoints']
+    open_waypoints()
+    open_traffic_light_images()
 
     try:
         rospy.spin()

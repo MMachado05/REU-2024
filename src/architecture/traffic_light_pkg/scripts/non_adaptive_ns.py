@@ -4,6 +4,7 @@ import rospy
 from std_msgs.msg import Bool, Time, Int32
 from typing import Optional
 
+
 MANUAL = 0
 CROSSWALK = 1
 INTERSECTION = 2
@@ -219,7 +220,7 @@ class NonAdaptiveNorthSouthLight:
                 self.time_to_next_south_state = self.red_duration - time_elapsed
             # TODO: I'm *confident* there is a much more efficient way to calculate this.
             #       Something to do with the fact that time elapsed can be 0? I'll have to
-            #       try something tomorrow.
+            #       try something tomorrow. -- the man never came back
         self.north_time_to_next_state_pub.publish(self.time_to_next_north_state)
         self.south_time_to_next_state_pub.publish(self.time_to_next_south_state)
 

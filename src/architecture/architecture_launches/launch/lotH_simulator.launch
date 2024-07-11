@@ -42,7 +42,7 @@
     <include file="$(find gazelle_sim)/launch/gazelle_sim.launch" />
 
     <!-- Robot 1 -->
-    <!-- <group ns="robot1">
+    <group ns="robot1">
 
         
         <rosparam command="load" file="$(find v2x_simulator)/robot/ACTor.yaml" />
@@ -79,7 +79,7 @@
         <param name="img_out_topic" type="str" value="$(arg preprocessed_img_topic)" />
         </node>
 
-        
+
 
         <node
         name="lane_detector"
@@ -94,7 +94,6 @@
 
         
 
-        
         <node
         name="crop_only_line_detection_preprocessor"
         pkg="preprocessors_pkg"
@@ -105,6 +104,7 @@
         <param name="img_in_topic" type="str" value="$(arg preprocessor_in_topic)" />
         <param name="img_out_topic" type="str" value="cropped_img" />
         </node>
+
 
         
         <node
@@ -117,7 +117,7 @@
         <param name="img_in_topic" type="str" value="cropped_img" />
         <param name="decision_out_topic" type="str" value="yellow_detected" />
         </node>
-    </group> -->
+    </group>
 
     <group ns="robot2">
         <!-- Robot Information -->
@@ -205,5 +205,8 @@
 
     <!-- RSU -->
     <include file="$(find traffic_light_pkg)/launch/start_nonadaptive_ns_with_runner.launch"></include>
+
+    <!-- Rosboard -->
+    <include file="$(find rosboard)/launch/rosboard.launch"></include>
 
 </launch>
