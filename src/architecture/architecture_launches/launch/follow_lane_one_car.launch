@@ -52,7 +52,7 @@
   <group unless="$(eval arg('vehicle_namespace') == 'robot1')" ns="$(arg vehicle_namespace)">
     <include file="$(find architecture_launches)/launch/packages/preprocessor.launch">
       <arg name="preprocessor" value="$(arg preprocessor)" />
-      <arg name="preprocessor_in_topic" value="cam_pub/image_raw" />
+      <arg name="preprocessor_in_topic" value="/$(arg vehicle_namespace)/cam_pub/image_raw" />
       <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
     </include>
   </group>

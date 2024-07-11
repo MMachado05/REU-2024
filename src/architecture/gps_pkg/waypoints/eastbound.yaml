@@ -1,0 +1,15 @@
+#Eastbound = Outer Lane
+intersections:
+
+# Inner lane BEGINNING of the intersection
+- [42.47221130573537, -83.25009066598378]
+# lat:
+# lon:
+
+# Inner lane ENDING of the intersection
+- [42.4722641195775, -83.25015653391557]
+# lat:
+# lon:
+
+waypoints:
+
