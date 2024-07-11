@@ -12,6 +12,9 @@ prev_coords = None
 velocity = 0.0
 accerleration = 0.0
 
+gps_latitude = 0.0
+gps_longitude = 0.0
+
 dx_list = []
 dv_list = []
 a_list = []
@@ -61,7 +64,7 @@ def timer_callback(event):
 
 if __name__ == '__main__':
     # Initialize ROS node
-    rospy.init_node('comfortability-metrics', anonymous=True)
+    rospy.init_node('comfortability_metrics', anonymous=True)
     print('running gps calculations node ... ')
 
     global duration

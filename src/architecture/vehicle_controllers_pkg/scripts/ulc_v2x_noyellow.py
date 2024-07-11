@@ -54,9 +54,20 @@ class ULCWithV2XNoYellowVC:
         Initializes the node.
         """
         # Node architecture
-        lane_name = rospy.get_param("~lane_name")
-
         rospy.init_node("simple_ulc_vc", anonymous=True)
+        
+        # ULC-related node architecture
+        self.ulc_speed_publisher = rospy.Publisher(
+            "vehicle/ulc_cmd", UlcCmd, queue_size=1
+        )
+        self.ulc_steering_publisher = rospy.Publisher(
+            "vehicle/steering_cmd", SteeringCmd, queue_size=1
+        )
+        self.ulc_enable_publisher = rospy.Publisher(
+            "vehicle/enable", Empty, queue_size=1
+        )
+
+        lane_name = rospy.get_param("~lane_name")
 
         self.light_state_subscriber = rospy.Subscriber(
             f"/light/{lane_name}/state", Bool, self._get_light_state
@@ -83,17 +94,6 @@ class ULCWithV2XNoYellowVC:
             self._get_distance,
         )
         self.dyn_rcfg_srv = Server(ULCNoYNoRNoGConfig, self._dynamic_reconfig_callback)
-
-        # ULC-related node architecture
-        self.ulc_speed_publisher = rospy.Publisher(
-            "vehicle/ulc_cmd", UlcCmd, queue_size=1
-        )
-        self.ulc_steering_publisher = rospy.Publisher(
-            "vehicle/steering_cmd", SteeringCmd, queue_size=1
-        )
-        self.ulc_enable_publisher = rospy.Publisher(
-            "vehicle/enable", Empty, queue_size=1
-        )
 
         self.drive_on = False
         self.speed = 0.0

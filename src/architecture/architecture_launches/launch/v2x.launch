@@ -83,7 +83,7 @@
     </node>
 
     <!--COMFORTABILITY -->
-    <node name="comfortability-metrics" pkg="gps_pkg" type="comfortability-metrics.py" required="true" output="screen">
+    <node name="comfortability_metrics" pkg="gps_pkg" type="comfortability-metrics.py" required="true" output="screen">
     </node>
 
 
@@ -94,18 +94,6 @@
       type="rqt_reconfigure"
       args="-t"
     />
-  </group>
-
-  <group if="$(eval arg('vehicle_namespace') == 'actor1')">
-    <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-      <arg name="ns" value="reference" />
-      <arg name="device_ids" value="tcp://192.168.0.222:55555" />
-    </include>
-
-    <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-      <arg name="ns" value="attitude" />
-      <arg name="device_ids" value="tcp://192.168.0.223:55555" />
-    </include>
   </group>
 
   <group ns="$(arg vehicle_namespace)">
@@ -124,18 +112,16 @@
     <group if="$(eval arg('vehicle_namespace') == 'actor2')">
       <include file="$(find piksi_multi_cpp)/launch/rover.launch">
         <arg name="ns" value="reference" />
-        <arg name="device_ids" value="tcp://192.168.0.30:55555" />
+        <arg name="device_ids" value="tcp://192.168.60.30:55555" />
       </include>
 
       <include file="$(find piksi_multi_cpp)/launch/rover.launch">
         <arg name="ns" value="attitude" />
-        <arg name="device_ids" value="tcp://192.168.0.31:55555" />
+        <arg name="device_ids" value="tcp://192.168.60.31:55555" />
       </include>
     </group>
   </group>
 
-
-  <!-- Rosboard -->
-  <include file="$(find rosboard)/launch/rosboard.launch"></include>
+  <!-- TODO: Add ROSBoard eventually, once everything else is working fine. -->
 
 </launch>

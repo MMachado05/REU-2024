@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+
 import rospy
 import rospkg
 import yaml
 import math
 
-from sbp_ros_msgs.msg import MsgPosLlh
+from libsbp_ros_msgs.msg import MsgPosLlh
 from std_msgs.msg import Float64
 from geopy.distance import geodesic
 
