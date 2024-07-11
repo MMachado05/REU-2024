@@ -63,7 +63,7 @@
         >
         <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
         <param name="cmd_vel_out_topic" type="str" value="cmd_vel" />
-        <param name="lane_name" type="str" value="south"/>
+        <param name="lane_name" type="str" value="eastbound"/>
         </node>
 
         
@@ -140,7 +140,7 @@
         >
         <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
         <param name="cmd_vel_out_topic" type="str" value="cmd_vel" />
-        <param name="lane_name" type="str" value="north"/>
+        <param name="lane_name" type="str" value="northbound"/>
         </node>
 
         <!-- ============ -->
@@ -205,6 +205,7 @@
 
     <!-- RSU -->
     <include file="$(find traffic_light_pkg)/launch/start_nonadaptive_ns_with_runner.launch"></include>
+    <include file="$(find traffic_light_pkg)/launch/start_nonadaptive_ns_control.launch"></include>
 
     <!-- Rosboard -->
     <include file="$(find rosboard)/launch/rosboard.launch"></include>
