@@ -3,3 +3,4 @@ devel/
 logs/
 .catkin_tools/
 src/ethz_piksi_ros/libsbp_ros_msgs/src/libsbp_ros_msgs/__pycache__
+src/ethz_piksi_ros/libsbp_ros_msgs/src/libsbp_ros_msgs/__pycache__
