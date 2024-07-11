@@ -14,7 +14,7 @@ and bottom of the image.
 * birdseye - An image-split LSRL-based lane detector. *NOTE:* This lane detector only works
 with the `passthrough` preprocessor.
 
-## vehicle
-* sim (default) - Simulates the vehicle in the simulator.
+## vehicle_namespace
+* robot1 (default) - Simulates the vehicle in the simulator.
 * actor1 - Runs the vehicle in the actor1 namespace.
 * actor2 - Runs the vehicle in the actor2 namespace.
