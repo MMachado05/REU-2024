@@ -71,10 +71,6 @@ def time_to_state_cb(msg):
 
     vel = calculate_speed_to_intersection()
 
-def light_state_cb(msg):
-    global current_light_state, state, vel
-    current_light_state = msg.data
-
     if current_light_state:
         state = 'GREEN'
         light_state_img_pub.publish(green_img_msg)
@@ -82,7 +78,9 @@ def light_state_cb(msg):
         state = 'RED'
         light_state_img_pub.publish(red_img_msg)
 
-    # vel = calculate_speed_to_intersection()
+def light_state_cb(msg):
+    global current_light_state, state, vel
+    current_light_state = msg.data
 
 def pose_cb(msg):
     global current_pose
