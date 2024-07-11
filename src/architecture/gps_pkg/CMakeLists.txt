@@ -107,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES gps_pkg
-#  CATKIN_DEPENDS dynamic_reconfigure geometry_msgs roscpp rospy std_msgs
+#  CATKIN_DEPENDS dynamic_reconfigure geometry_msgs roscpp rospy std_msgs sensor_msgs
 #  DEPENDS system_lib
 )
 

@@ -79,6 +79,8 @@ class FullYellowDetector:
         self.val_low = config.val_low
         self.val_high = config.val_high
 
+        return config
+
     def _image_callback(self, ros_image: Image) -> None:
         """
         Callback function for image subscriber.
@@ -89,7 +91,7 @@ class FullYellowDetector:
             ROS image to be processed.
         """
         try:
-            cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(ros_image, "bgr8")
+            cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(ros_image)
         except CvBridgeError as e:
             rospy.logerr(f"full_yellow_detector:94 - ROS to OpenCV Bridge Error: {e}")
             return

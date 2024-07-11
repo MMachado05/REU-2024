@@ -1,0 +1,37 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/michael/reu_ws/devel/include/**",
+        "/home/michael/catkin_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/michael/catkin_ws/src/color_pct_pkg/include/**",
+        "/home/michael/catkin_ws/src/cvros0_pkg/include/**",
+        "/home/michael/reu_ws/src/dataspeed_can/dataspeed_can_msg_filters/include/**",
+        "/home/michael/reu_ws/src/dataspeed_can/dataspeed_can_usb/include/**",
+        "/home/michael/reu_ws/src/dbw_polaris_ros/dbw_polaris_can/include/**",
+        "/home/michael/catkin_ws/src/dyn_rcfg0_pkg/include/**",
+        "/home/michael/catkin_ws/src/follow_lane_pkg/include/**",
+        "/home/michael/reu_ws/src/gazelle_sim/gazelle_sim/include/**",
+        "/home/michael/catkin_ws/src/hi_world_pkg/include/**",
+        "/home/michael/reu_ws/src/ethz_piksi_ros/libsbp_ros_msgs/include/**",
+        "/home/michael/catkin_ws/src/lusb/include/**",
+        "/home/michael/reu_ws/src/ethz_piksi_ros/piksi_multi_cpp/include/**",
+        "/home/michael/reu_ws/src/ethz_piksi_ros/rqt_gps_rtk_plugin/include/**",
+        "/home/michael/catkin_ws/src/simple_sim/include/**",
+        "/home/michael/catkin_ws/src/turtlesim_tst_pkg/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

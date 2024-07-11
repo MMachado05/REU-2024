@@ -4,6 +4,7 @@ import rospy
 from std_msgs.msg import Bool, Time, Int32
 from typing import Optional
 
+
 MANUAL = 0
 CROSSWALK = 1
 INTERSECTION = 2

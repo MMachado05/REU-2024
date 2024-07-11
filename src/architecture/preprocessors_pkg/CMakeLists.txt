@@ -93,6 +93,7 @@ find_package(catkin REQUIRED COMPONENTS
 generate_dynamic_reconfigure_options(
   cfg/Preprocessor.cfg
   cfg/EasyBirdseyePreprocessor.cfg
+  cfg/CropOnlyPreprocessor.cfg
 )
 
 ###################################
