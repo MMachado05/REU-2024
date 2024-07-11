@@ -82,6 +82,10 @@
       <param name="lane_name" type="str" value="$(arg lane_name)" />
     </node>
 
+    <!--COMFORTABILITY -->
+    <node name="comfortability-metrics" pkg="gps_pkg" type="comfortability-metrics.py" required="true" output="screen">
+    </node>
+
 
     <!-- Open RQT Console -->
     <node
