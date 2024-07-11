@@ -134,6 +134,7 @@ class SimpleULCVC:
             math.atan2(incoming_twist.angular.x, incoming_twist.angular.y)
             * self.twist_multiplier
         )
+        turn_angle = math.degrees(turn_angle)
         # NOTE: Yes, these are swapped. Visually, here's why:
         # ..
         # What *we* see
