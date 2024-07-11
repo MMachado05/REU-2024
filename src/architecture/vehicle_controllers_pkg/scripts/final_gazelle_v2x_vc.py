@@ -27,18 +27,29 @@ di = None
 curent_pose = None
 time_left = None
 current_light_state = False
-green_duration = 0
-red_duration = 0
+state = 'RED'
+green_duration = 15.0
+red_duration = 15.0
+curr_vel = None
+vel = 0.0
+d_int = 0.0
+d_int_end = 0.0
+d_red = 0.0
+d_green = 0.0
+d_green_red = 0.0
+v = 0.0
 
 class Break (Exception):
     pass
 
 def dyn_rcfg_cb(config, level):
-    global drive_on, speed, twist_multiplier
+    global drive_on, speed, twist_multiplier, curr_vel
 
     drive_on = config.drive_on
     speed = config.speed
     twist_multiplier = config.twist_multiplier
+
+    rospy.loginfo("i've been changed!!!")
 
     return config
 
@@ -51,17 +62,23 @@ def red_duration_cb(msg):
     red_duration = msg.data
 
 def time_to_state_cb(msg):
-    global time_left
+    global time_left, vel
     time_left = float(str(msg.data.secs) + '.' + str(msg.data.nsecs))
 
 def light_state_cb(msg):
-    global current_light_state
+    global current_light_state, state, vel
     current_light_state = msg.data
+
+    if current_light_state:
+        state = 'GREEN'
+    else:
+        state = 'RED'
+
+    vel = calculate_speed_to_intersection()
 
 def pose_cb(msg):
     global current_pose
     current_pose = {'x': msg.pose.pose.position.x, 'y': msg.pose.pose.position.y}
-
 
 def distance_to_intersection():
     global intersections, waypoints, total_distance
@@ -87,34 +104,71 @@ def distance_to_intersection():
     except Break:
         pass
 
-    rospy.loginfo('total_distance: ' + str(total_distance))
+    # rospy.loginfo('total_distance: ' + str(total_distance))
 
     return total_distance
 
 def calculate_speed_to_intersection():
-    global di
+    global d_int, v, curr_vel, v, dist_int_end # d_red, d_green, d_green_red
 
-    # Benat if not and or statement
-    # if not current_pose or not time_left or di == None:
-    #     return speed
-    
-    di = distance_to_intersection()
+    dist_tolerance = 0.0 # whatever units this sim uses
+    time_tolerance = 1.5 # seconds -- future be adjusted based on speed of the car to account the amount of time it takes the real car to slow down
 
-    if current_light_state == True: # light is green
-        rospy.loginfo('green')
-        return speed
-    else: # light is red
-        rospy.loginfo('red')
+    intersection_distance = 8.0
 
-        new_speed = di / time_left
-        
-        if new_speed > speed:
-            return speed
+    v = 0.0
+    d_int = distance_to_intersection() - dist_tolerance
+    d_int_end = d_int + intersection_distance
+
+
+    if current_light_state is False: # light is RED
+
+        d = speed * red_duration
+
+        if d > d_int:  # if we are going too fast
+            v = d_int / (red_duration + time_tolerance)
         else:
-            return new_speed
+            v = speed
+    else:  # light is GREEN
+
+        d = speed * green_duration
+
+        if d > d_int_end: # if you can make the intersection before it turns red
+            v = speed
+        else:
+
+            d = speed * (green_duration + red_duration + time_tolerance)
+
+            if d < d_int: # if the you will make the intersection once the light turns green, AGAIN
+                v = speed
+            else:
+                v = d_int / (green_duration + red_duration + time_tolerance)
+
+
+
+
+
+
+
+        # if d > (d_int_end): # if we are going to make the light in the intersection
+        #     v = speed
+        # else:
+        #     d = speed * (green_duration + red_duration)
+
+        #     if d > d_int_end:
+        #         v = d_int_end / (green_duration + red_duration + time_tolerance)
+        #     else:
+        #         v = speed
+        
+        # v = speed
+
+
+    rospy.loginfo(f'\n state: {state} \n dist to intersection: {d_int} \n dist to int end: {d_int_end} \n dist calc: {d} \n orginal speed: {speed} \n calculated speed: {v} \n\n')
+
+    return v
         
 def follow_lane_cb(lane_twist_msg):
-    global drive_on, speed, twist_multiplier, is_driving, velocity_msg
+    global drive_on, speed, twist_multiplier, is_driving, velocity_msg, vel
 
     if not drive_on:
         if is_driving:
@@ -128,8 +182,9 @@ def follow_lane_cb(lane_twist_msg):
     if not is_driving:
         rospy.loginfo('final_gazelle_v2x_vc:129 - starting vehicle')
         is_driving = True
+        distance_to_intersection()
 
-    velocity_msg.linear.x = calculate_speed_to_intersection()
+    velocity_msg.linear.x = vel
     velocity_msg.angular.z = -math.atan2(lane_twist_msg.angular.x, lane_twist_msg.angular.y) * twist_multiplier
 
     velocity_publisher.publish(velocity_msg)

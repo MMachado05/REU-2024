@@ -71,7 +71,7 @@ class NonAdaptiveNorthSouthLight:
         self.mode = CROSSWALK
         self.north_light_state = GREEN
         self.south_light_state = GREEN
-        self.green_duration = rospy.Duration(45, 0)
+        self.green_duration = rospy.Duration(15, 0)     # Rickey changed this to 15 GREEN
         self.red_duration = rospy.Duration(15, 0)
 
         self.north_light_current_state = GREEN
