@@ -82,6 +82,7 @@
       <param name="lane_name" type="str" value="$(arg lane_name)" />
     </node>
 
+
     <!-- Open RQT Console -->
     <node
       name="rqt_console"
@@ -89,6 +90,44 @@
       type="rqt_reconfigure"
       args="-t"
     />
+  </group>
+
+  <group if="$(eval arg('vehicle_namespace') == 'actor1')">
+    <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+      <arg name="ns" value="reference" />
+      <arg name="device_ids" value="tcp://192.168.0.222:55555" />
+    </include>
+
+    <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+      <arg name="ns" value="attitude" />
+      <arg name="device_ids" value="tcp://192.168.0.223:55555" />
+    </include>
+  </group>
+
+  <group ns="$(arg vehicle_namespace)">
+    <group if="$(eval arg('vehicle_namespace') == 'actor1')">
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="reference" />
+        <arg name="device_ids" value="tcp://192.168.0.222:55555" />
+      </include>
+
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="attitude" />
+        <arg name="device_ids" value="tcp://192.168.0.223:55555" />
+      </include>
+    </group>
+
+    <group if="$(eval arg('vehicle_namespace') == 'actor2')">
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="reference" />
+        <arg name="device_ids" value="tcp://192.168.0.30:55555" />
+      </include>
+
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="attitude" />
+        <arg name="device_ids" value="tcp://192.168.0.31:55555" />
+      </include>
+    </group>
   </group>
 
 
