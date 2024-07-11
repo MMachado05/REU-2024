@@ -10,6 +10,7 @@ import numpy as np
 import math
 import torch
 import time
+import os
 
 # from dynamic_reconfigure.server import Server
 # from lane_detectors_pkg.cfg import ...  # packageName.cfg
@@ -109,23 +110,6 @@ class DeepLSDLaneDetector:
             out = net(inputs)
             pred_lines = out['lines'][0]
 
-        def extend(line, factor=2):
-            x1, y1 = line[0]
-            x2, y2 = line[1]
-            
-            # Calculate the direction of the line
-            dx = x2 - x1
-            dy = y2 - y1
-            
-            # Extend the line by the factor in both directions
-            x1_extended = x1 - factor * dx
-            y1_extended = y1 - factor * dy
-            x2_extended = x2 + factor * dx
-            y2_extended = y2 + factor * dy
-            
-            return [(int(x1_extended), int(y1_extended)), (int(x2_extended), int(y2_extended))]
-
-
         # Filter lines by slope and length
         filtered_lines = []
         for line in pred_lines:
@@ -139,18 +123,19 @@ class DeepLSDLaneDetector:
                     
                     # Filter based on slope and length
                     line_length = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-                    min_slope = 0.4
+                    min_slope = 0.2
                     min_length = 10
                     
                     if abs(slope) > min_slope and line_length > min_length:
 
-                        extend_factor = 1.3
+                        extend_factor = 1.1
                         x1_extended = int(x1 - (x2 - x1) * (extend_factor))
                         y1_extended = int(y1 - (y2 - y1) * (extend_factor))
                         x2_extended = int(x2 + (x2 - x1) * (extend_factor))
                         y2_extended = int(y2 + (y2 - y1) * (extend_factor))
                         filtered_lines.append([(x1_extended, y1_extended), (x2_extended, y2_extended)])
                         cv.line(image2, (int(x1_extended), int(y1_extended)), (int(x2_extended), int(y2_extended)), (0, 0, 255), 2)
+
 
         def get_red_pixels(image):
             # Create a mask for red color in BGR
@@ -166,7 +151,7 @@ class DeepLSDLaneDetector:
 
         # UNSUPERVISED LEARNING USING DBSCAN
         # find clusters using dbscan density based clustering
-        dbscan = DBSCAN(eps=70, min_samples=2)
+        dbscan = DBSCAN(eps=100, min_samples=2)
         clusters = dbscan.fit_predict(points)
 
         # get the two clusters closest to bottom with certain minimum size
@@ -179,7 +164,7 @@ class DeepLSDLaneDetector:
 
             cluster_points = points[clusters == label]
 
-            if len(cluster_points) >= 4:
+            if len(cluster_points) >= 8:
                 centroid_y = np.max(cluster_points[:, 0])
                 valid_clusters.append((label, centroid_y))
 
@@ -251,9 +236,20 @@ if __name__ == "__main__":
                 'grad_nfa': True,
             }
         }
+
+        home_dir = os.environ['HOME']
+        potential_dir = os.path.join(home_dir, 'reu_ws/src')
+        if os.path.isdir(potential_dir):
+            ckpt = os.path.join(home_dir, 'reu_ws/src/architecture/lane_detectors_pkg/scripts/weights/deeplsd_md.tar')
+        else:
+            potential_dir = os.path.join(home_dir, 'REU_ws/src')
+            if os.path.isdir(potential_dir):
+                ckpt = os.path.join(home_dir, 'REU_ws/src/architecture/lane_detectors_pkg/scripts/weights/deeplsd_md.tar')
+            else:
+                ckpt = os.path.join(home_dir, 'reu_ws/REU-2024/src/architecture/lane_detectors_pkg/scripts/weights/deeplsd_md.tar')
+        # Marcial note: Yes, this code is garbage. I'm tired. Fix it yourself if you hate it so much. (Not you Benat, ily <3)
         
-        from pathlib import Path
-        ckpt = Path.home() / 'deeplsd_md.tar'
+
         ckpt = torch.load(str(ckpt), map_location='cpu')
         net = DeepLSD(conf)
         net.load_state_dict(ckpt['model'])
