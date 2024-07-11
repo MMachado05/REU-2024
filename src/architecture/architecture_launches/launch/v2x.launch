@@ -69,6 +69,17 @@
     >
       <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
       <param name="lane_name" type="str" value="$(arg lane_name)" />
+      <param name="distance_from_intersection_topic" type="str" value="distance" />
+    </node>
+
+    <node
+      name="distance_calculation"
+      pkg="gps_pkg"
+      type="distance_calculation.py"
+      required="true"
+      output="screen"
+    >
+      <param name="lane_name" type="str" value="$(arg lane_name)" />
     </node>
 
     <!-- Open RQT Console -->
