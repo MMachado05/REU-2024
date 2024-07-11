@@ -17,6 +17,10 @@ MODE_INT_TO_STR = {
 GREEN = True
 RED = False
 
+NORTHBOUND = 3
+EASTBOUND = 4
+ALL_RED = 5
+
 STATE_BOOL_TO_STR = {GREEN: "GREEN", RED: "RED"}
 
 ZERO_DURATION = rospy.Duration(0)
@@ -54,6 +58,7 @@ class NonAdaptiveNorthSouthLight:
     eastbound_light_current_state: bool
 
     crosswalk_state: bool
+    intersection_state: int
 
     green_duration: rospy.Duration
     red_duration: rospy.Duration
@@ -78,6 +83,7 @@ class NonAdaptiveNorthSouthLight:
         self.eastbound_light_current_state = GREEN
 
         self.crosswalk_state = GREEN
+        self.intersection_state = ALL_RED
 
         self.time_to_next_northbound_state = rospy.Duration(-1, 0)
         self.time_to_next_eastbound_state = rospy.Duration(-1, 0)
@@ -110,7 +116,9 @@ class NonAdaptiveNorthSouthLight:
         self.northbound_state_pub = rospy.Publisher(
             "northbound/state", Bool, queue_size=1
         )
-        self.eastbound_state_pub = rospy.Publisher("eastbound/state", Bool, queue_size=1)
+        self.eastbound_state_pub = rospy.Publisher(
+            "eastbound/state", Bool, queue_size=1
+        )
 
         self.northbound_time_to_next_state_pub = rospy.Publisher(
             "northbound/time_to_next_state", Time, queue_size=1
@@ -165,7 +173,7 @@ class NonAdaptiveNorthSouthLight:
         elif self.mode == CROSSWALK:
             self._publish_crosswalk(rospy.Time(now.data.secs, now.data.nsecs))
         elif self.mode == INTERSECTION:
-            self._publish_intersection()
+            self._publish_intersection(rospy.Time(now.data.secs, now.data.nsecs))
         else:
             rospy.logfatal(f"non_adaptive_ns_light - Illegal mode <{self.mode}>.")
             exit(1)
@@ -187,11 +195,17 @@ class NonAdaptiveNorthSouthLight:
             rospy.loginfo("non_adaptive_ns_light - Switching northbound light to red.")
             self.northbound_state_pub.publish(Bool(RED))
             self.northbound_light_current_state = RED
-        if self.eastbound_light_state is GREEN and self.eastbound_light_current_state is RED:
+        if (
+            self.eastbound_light_state is GREEN
+            and self.eastbound_light_current_state is RED
+        ):
             rospy.loginfo("non_adaptive_ns_light - Switching eastbound light to green.")
             self.eastbound_state_pub.publish(Bool(GREEN))
             self.eastbound_light_current_state = GREEN
-        if self.eastbound_light_state is RED and self.eastbound_light_current_state is GREEN:
+        if (
+            self.eastbound_light_state is RED
+            and self.eastbound_light_current_state is GREEN
+        ):
             rospy.loginfo("non_adaptive_ns_light - Switching eastbound light to red.")
             self.eastbound_state_pub.publish(Bool(RED))
             self.eastbound_light_current_state = RED
@@ -199,44 +213,60 @@ class NonAdaptiveNorthSouthLight:
     def _publish_crosswalk(self, now: rospy.Time):
         if self.time_of_last_state_change is None:
             self.time_of_last_state_change = rospy.Time(now.secs, now.nsecs)
-        # North and eastbound are the same, so I picked arbitrarily here.
-        if self.time_to_next_northbound_state <= ZERO_DURATION:
-            # Checking <= for edge cases where subtracting time elapsed crosses
-            #   zero seconds.
-            if self.crosswalk_state == GREEN:
-                rospy.loginfo("non_adaptive_ns_light - Switching crosswalk to red.")
-                self.crosswalk_state = RED
-                self.time_to_next_northbound_state = self.red_duration
-                self.time_to_next_eastbound_state = self.red_duration
-                self.northbound_state_pub.publish(Bool(RED))
-                self.eastbound_state_pub.publish(Bool(RED))
-            elif self.crosswalk_state == RED:
-                rospy.loginfo("non_adaptive_ns_light - Switching crosswalk to green.")
-                self.crosswalk_state = GREEN
-                self.time_to_next_northbound_state = self.green_duration
-                self.time_to_next_eastbound_state = self.green_duration
-                self.northbound_state_pub.publish(Bool(GREEN))
-                self.eastbound_state_pub.publish(Bool(GREEN))
+
+        # Get time elapsed since last state change.
+        time_elapsed_s = now.secs - self.time_of_last_state_change.secs
+        time_elapsed_ns = now.nsecs - self.time_of_last_state_change.nsecs
+        time_since_last_state = rospy.Duration(time_elapsed_s, time_elapsed_ns)
+
+        # Change states if necessary
+        if (
+            self.crosswalk_state == GREEN
+            and time_since_last_state >= self.green_duration
+        ):
+            rospy.loginfo("non_adaptive_ns_light - Switching crosswalk to red.")
+            self.crosswalk_state = RED
+            self.time_to_next_northbound_state = self.red_duration
+            self.time_to_next_eastbound_state = self.red_duration
+            self.northbound_state_pub.publish(Bool(RED))
+            self.eastbound_state_pub.publish(Bool(RED))
             self.time_of_last_state_change = now
+        elif self.crosswalk_state == RED and time_since_last_state >= self.red_duration:
+            rospy.loginfo("non_adaptive_ns_light - Switching crosswalk to green.")
+            self.crosswalk_state = GREEN
+            self.time_to_next_northbound_state = self.green_duration
+            self.time_to_next_eastbound_state = self.green_duration
+            self.northbound_state_pub.publish(Bool(GREEN))
+            self.eastbound_state_pub.publish(Bool(GREEN))
+            self.time_of_last_state_change = now
+        elif self.crosswalk_state == GREEN:
+            self.time_to_next_northbound_state = (
+                self.green_duration - time_since_last_state
+            )
+            self.time_to_next_eastbound_state = (
+                self.green_duration - time_since_last_state
+            )
+        elif self.crosswalk_state == RED:
+            self.time_to_next_northbound_state = (
+                self.red_duration - time_since_last_state
+            )
+            self.time_to_next_eastbound_state = (
+                self.red_duration - time_since_last_state
+            )
         else:
-            time_elapsed_s = now.secs - self.time_of_last_state_change.secs
-            time_elapsed_ns = now.nsecs - self.time_of_last_state_change.nsecs
-            time_elapsed = rospy.Duration(time_elapsed_s, time_elapsed_ns)
-            if self.crosswalk_state == GREEN:
-                self.time_to_next_northbound_state = self.green_duration - time_elapsed
-                self.time_to_next_eastbound_state = self.green_duration - time_elapsed
-            else:  # Can only be red
-                self.time_to_next_northbound_state = self.red_duration - time_elapsed
-                self.time_to_next_eastbound_state = self.red_duration - time_elapsed
-            # TODO: I'm *confident* there is a much more efficient way to calculate this.
-            #       Something to do with the fact that time elapsed can be 0? I'll have to
-            #       try something tomorrow.
+            rospy.logerr(
+                "non_adaptive_ns_light:257 - Unfamiliar crosswalk and duration configuration."
+            )
+            return
+
         self.northbound_time_to_next_state_pub.publish(
             self.time_to_next_northbound_state
         )
         self.eastbound_time_to_next_state_pub.publish(self.time_to_next_eastbound_state)
 
-    def _publish_intersection(self):
+    def _publish_intersection(self, now: rospy.Time):
+        if self.time_of_last_state_change is None:
+            self.time_of_last_state_change = rospy.Time(now.secs, now.nsecs)
         rospy.loginfo(
             "non_adaptive_ns_light - Intersection mode not implemented. Will try again in 10 seconds."
         )
