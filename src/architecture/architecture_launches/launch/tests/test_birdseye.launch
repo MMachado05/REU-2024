@@ -1,0 +1,62 @@
+<launch>
+
+  <arg name="preprocessed_img_topic" value="lane_preprocessed_img" />
+  <arg name="lane_twist_topic" value="desired_twist" />
+
+  <!-- ==================== -->
+  <!-- GazelleSim Arguments -->
+  <!-- ==================== -->
+  <arg name="show_dynamic_reconfigure" default="true" />
+
+
+  <!-- ========================= -->
+  <!-- Set simulation parameters -->
+  <!-- ========================= -->
+  <param name="map_dir" value="$(find v2x_simulator)/map" />
+  <rosparam command="load"
+            file="$(find v2x_simulator)/map/map.yaml" />
+
+
+  <!-- ============= -->
+  <!-- Define robots -->
+  <!-- ============= -->
+  <rosparam>
+    robot_list: ["robot1"]
+  </rosparam>
+  
+  <!-- Define robot1 -->
+  <group ns="robot1">
+    <node name="birds_eye" pkg="lane_detectors_pkg" type="birdseye_lane_detector.py" 
+       required="true" output="screen">
+    	<param name="img_in_topic" type="str" value="camera/image_raw" />   
+      <param name="desired_twist_out_topic" type="str" value="$(arg lane_twist_topic)" />   
+    </node>
+    <rosparam command="load"
+              file="$(find v2x_simulator)/robot/ACTor.yaml" />
+    <rosparam>
+        Xr_init: 18.36
+        Yr_init:  -12.79
+        Theta_init: deg(0.0)
+    </rosparam>
+
+    <node
+      name="vehicle_controller"
+      pkg="vehicle_controllers_pkg"
+      type="gazelle_noyellow_norsu_nogps_vc.py"
+      required="true"
+      output="screen"
+    >
+      <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
+      <param name="cmd_vel_out_topic" type="str" value="cmd_vel" />
+    </node>
+  </group>
+  
+  <!-- ================= -->
+  <!-- Launch GazelleSim -->
+  <!-- ================= -->
+  <include file="$(find gazelle_sim)/launch/gazelle_sim.launch">
+    <arg name="show_dynamic_reconfigure" value="$(arg show_dynamic_reconfigure)" />
+  </include>
+
+
+</launch>

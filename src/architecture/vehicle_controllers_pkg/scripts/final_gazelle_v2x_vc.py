@@ -69,19 +69,7 @@ def time_to_state_cb(msg):
     global time_left, vel
     time_left = float(str(msg.data.secs) + '.' + str(msg.data.nsecs))
 
-    # EXCEPTION HANDLING
-    # ERROR IN RSU NODES, CAUSES THIS TOPIC TO NO RUNNING THE CB
-    
-    # rospy.loginfo("i'm getting called!!!")
-
-    # try:
-    #     pass
-    # except Exception as e:
-    #     rospy.logerr('Exception in callback')
-
-def light_state_cb(msg):
-    global current_light_state, state, vel
-    current_light_state = msg.data
+    vel = calculate_speed_to_intersection()
 
     if current_light_state:
         state = 'GREEN'
@@ -90,7 +78,9 @@ def light_state_cb(msg):
         state = 'RED'
         light_state_img_pub.publish(red_img_msg)
 
-    vel = calculate_speed_to_intersection()
+def light_state_cb(msg):
+    global current_light_state, state, vel
+    current_light_state = msg.data
 
 def pose_cb(msg):
     global current_pose
@@ -131,34 +121,34 @@ def calculate_speed_to_intersection():
     time_tolerance = 1.5 # seconds -- future be adjusted based on speed of the car to account the amount of time it takes the real car to slow down
 
     intersection_distance = 8.0
-
     v = 0.0
+    
     d_int = distance_to_intersection() - dist_tolerance
     d_int_end = d_int + intersection_distance
 
 
     if current_light_state is False: # light is RED
 
-        d = speed * red_duration
+        d = speed * time_left
 
         if d > d_int:  # if we are going too fast
-            v = d_int / (red_duration + time_tolerance)
+            v = d_int / (time_left + time_tolerance)
         else:
             v = speed
     else:  # light is GREEN
 
-        d = speed * green_duration
+        d = speed * time_left
 
         if d > d_int_end: # if you can make the intersection before it turns red
             v = speed
         else:
 
-            d = speed * (green_duration + red_duration + time_tolerance)
+            d = speed * (time_left + red_duration + time_tolerance)
 
             if d < d_int: # if the you will make the intersection once the light turns green, AGAIN
                 v = speed
             else:
-                v = d_int / (green_duration + red_duration + time_tolerance)
+                v = d_int / (time_left + red_duration + time_tolerance)
 
     
     rospy.loginfo(f'\n state: {state} \n dist to intersection: {d_int} \n dist to int end: {d_int_end} \n dist calc: {d} \n orginal speed: {speed} \n calculated speed: {v} \n\n')
