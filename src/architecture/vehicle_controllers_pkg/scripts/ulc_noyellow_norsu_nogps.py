@@ -63,10 +63,6 @@ class SimpleULCVC:
         self.speed_msg.enable_steering = False  # Steering control via ULC not used here
         self.speed_msg.enable_shifting = True
         self.speed_msg.shift_from_park = True
-        self.speed_msg.linear_accel = 0.0
-        self.speed_msg.linear_decel = 0.0
-        self.speed_msg.jerk_limit_throttle = 0.0
-        self.speed_msg.jerk_limit_brake = 0.0
         self.speed_msg.pedals_mode = 0  # Speed mode
         # ---------------------------------------
 

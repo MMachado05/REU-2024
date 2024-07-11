@@ -3,6 +3,7 @@ import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Twist
+from sklearn.cluster import DBSCAN
 import cv2 as cv
 import numpy as np
 import math
@@ -17,7 +18,7 @@ class BirdseyeLaneDetector:
     """
     Birds Eye lane detector node.
 
-    Uses "bird_eye_houghs.py" code.
+    Uses "bird_eye_dbscan.py" code.
     """
 
     preprocessed_img_subscriber: rospy.Subscriber
@@ -65,9 +66,6 @@ class BirdseyeLaneDetector:
         self.crop_hor = 0.5
         self.crop_ver = 0.5
         self.crop_orig = 0.5
-        
-        # other
-        self.mask = None
 
         # Misc.
         self.rosimg_cv_bridge = CvBridge()
@@ -89,7 +87,10 @@ class BirdseyeLaneDetector:
             The new dynamic reconfigure parameters.
         """
         self.display_desired_twist_image = config.display_desired_twist_image
-                
+        
+
+        # FIXME: Need to implement all of this
+        
         self.thresh = config.thresh
         self.pers = config.pers
         self.width = config.pers_width
@@ -102,18 +103,31 @@ class BirdseyeLaneDetector:
 
     def change_perspective(self, img):
         rows, cols, _ = img.shape
-
+        
         p1 = [0, 0]
         p2 = [int(cols * self.width), 0]
         p3 = [int(cols * self.width) - int(cols * self.pers), rows]
         p4 = [int(cols * self.pers), rows]
-
+        
         per1 = np.float32([[0, 0], [cols, 0], [cols, rows], [0, rows]])
         per2 = np.float32([p1, p2, p3, p4])
-
+        
         matrix = cv.getPerspectiveTransform(per1, per2)
         result = cv.warpPerspective(img, matrix, (int(cols * self.width), rows))
         return result
+    
+    def crop_image(self, image):
+        # crop image
+        if len(image.shape) < 3:
+            rows, cols = image.shape
+        else:
+            rows, cols, ch = image.shape
+        left_bound = cols//2 - int(cols * self.crop_hor / 2)
+        right_bound = cols//2 + int(cols * self.crop_hor / 2)
+        lower_crop = int(rows * self.crop_ver)
+        image = image[lower_crop:, left_bound:right_bound]
+        return image
+    
 
     # ---------------------------------------
     # ----------- Lane detection ------------
@@ -190,8 +204,14 @@ class BirdseyeLaneDetector:
         
         cv.imshow("Canny", img_canny)
         
+        cv_image = self.crop_image(cv_image)
+        
+        image = self.crop_image(img_canny)
+        
         # compute coefficient and publish velocity
-        self.compute_center(img_canny)
+        self.dbscan_process(cv_image, image)
+        
+        cv.waitKey(3)
     
     def houghs(self, image):
     
@@ -216,7 +236,7 @@ class BirdseyeLaneDetector:
                     slope = (y2 - y1) / (x2 - x1)
                 
                 # Extend the line if its length is shorter than 40 pixels and slope is >= 0.4 or <= -0.4
-                if length < 100 and abs(slope) >= 1.5: # 50, 0.5
+                if length < 1000 and abs(slope) >= 0.5: # 50, 0.5
                     # Extend the line by a factor of 1.5 times its original length
                     extend_factor = 2
                     x1_extended = int(x1 - (x2 - x1) * (extend_factor - 1))
@@ -225,136 +245,121 @@ class BirdseyeLaneDetector:
                     y2_extended = int(y2 + (y2 - y1) * (extend_factor - 1))
                     
                     cv.line(line_image, (x1_extended, y1_extended), (x2_extended, y2_extended), (255, 255, 255), 2)
-                elif abs(slope) >= 1.5:
+                elif abs(slope) >= 0.5:
                     cv.line(line_image, (x1, y1), (x2, y2), (255, 255, 255), 2)
         return line_image
     
-    def compute_y(self, m, c ,x):
-        return int(m * x + c)
-
-    def compute_center(self, image):
-        # crop image
-        rows, cols = image.shape
-        left_bound = cols//2 - int(cols * self.crop_hor / 2)
-        right_bound = cols//2 + int(cols * self.crop_hor / 2)
-        lower_crop = int(rows * self.crop_ver)
-        image = image[lower_crop:, left_bound:right_bound]
-        r, c = image.shape
+    def dbscan_process(self, image, line_image):
         
-        # create mask
-        if self.mask is None or self.mask.shape != image.shape:
-            self.mask = np.zeros((r, c), np.uint8)
-            self.mask.fill(255)
+        rows, cols, ch = image.shape
+        # get white points
+        points = np.column_stack(np.where(line_image > 0))   
         
-            
-        image = cv.bitwise_and(image, self.mask)
-        
-        # get all white points (edge lane points)
-        lane_points = cv.findNonZero(image)
-        
-        # get coordinates of all left and right lane points
-        left_x = []
-        left_y = []
-        right_x = []
-        right_y = []
-        if lane_points is not None:
-            for point in lane_points:
-                pnt = point[0]
-                if pnt[0] < c//2:
-                    left_y.append(pnt[0])
-                    left_x.append(pnt[1])
-                else:
-                    right_y.append(pnt[0])
-                    right_x.append(pnt[1])
-        else:
+        if len(points) == 0:
+            print("No white pixels detected.")
             self.publish_angle(None, None, 2)
-            return 
-        
-        # get coefficients for lsrl for left lane
-        if (len(left_x)!=0 and len(left_y)!=0):
-            A = np.vstack([left_x, np.ones(len(left_x))]).T
-            m_left, c_left = np.linalg.lstsq(A, left_y)[0]
-        else:
-            m_left = 0
-            c_left = 0
-        # draw left line
-        cv.line(image, (self.compute_y(m_left, c_left, 0), 0), (self.compute_y(m_left, c_left, r), r), 120, 3)
-        
-        # get coefficients for lsrl for right lane
-        if (len(right_x)!=0 and len(right_y)!=0):
-            A = np.vstack([right_x, np.ones(len(right_x))]).T
-            m_right, c_right = np.linalg.lstsq(A, right_y)[0]
-        else:
-            m_right = 0
-            c_right = c
-        #draw right line
-        cv.line(image, (self.compute_y(m_right, c_right, 0), 0), (self.compute_y(m_right, c_right, r), r), 170, 3)
-        
-        self.draw_mask((m_left+m_right)/2, image)
-        
-        # compute midpoint of two lanes
-        y_left = self.compute_y(m_left, c_left, r//2)
-        if y_left > c//2:
-            y_left = 0
-        
-        y_right = self.compute_y(m_right, c_right, r//2)
-        if y_right < c//2:
-            y_right = c
-        
-        cx = int((y_left+y_right)//2)
-        cy = r // 2
-        mid = c // 2
-        
-        angle = float(math.degrees(math.atan2(abs(mid - cx), abs(rows - cy))) / 2) * 50 / 180
-        
-        if cx < mid:
-            self.publish_angle(-angle, 0.5, 0)
-        else:
-            self.publish_angle(angle, 0.5, 0)
+            return
 
-        # draw, show & return result
-        cv.circle(image, (cx, cy), 3, 255, -1)    
-        cv.imshow("Lines", image)
-        cv.waitKey(3)
-    
-    def draw_mask(self, av_m, image):
-        rows, cols = image.shape
-        mask = np.zeros((rows, cols), np.uint8)
-        mask.fill(255)
+        # downsample the points uniformly for clustering
+        # downsample_factor = 10
+        # points = points[::downsample_factor]
+        downsample_factor = 100
+        points = points[::downsample_factor]
+
+        # perform density based clustering
+        dbscan = DBSCAN(eps=70, min_samples=3) # 100
+        clusters = dbscan.fit_predict(points)
+
+        # get the two clusters closest to bottom with certain minimum size
+        unique_labels, counts = np.unique(clusters, return_counts=True)
+        valid_clusters = []
+
+        for label in unique_labels:
+            if label == -1:  
+                continue
+
+            cluster_points = points[clusters == label]
+
+            if len(cluster_points) >= 10:
+                centroid_y = np.max(cluster_points[:, 0])
+                valid_clusters.append((label, centroid_y))
+
+        sorted_clusters = sorted(valid_clusters, key=lambda x: x[1], reverse=True)[:2]
+        largest_labels = [sorted_clusters[i][0] for i in range(min(2, len(sorted_clusters)))]
+        colors = [(0, 255, 0), (0, 0, 255)]
+        label_to_color = {label: colors[i] for i, label in enumerate(largest_labels)}
+
+        # conditions
+        if len(largest_labels) == 0:
+            self.publish_angle(0, 0.5, 2)
+            return
         
-        p1 = (0, rows//2)
-        p2 = (int(-rows//2*av_m), 0)
-        p3 = (0, 0)
-        fig = [p1, p2, p3]
-        cv.fillPoly(mask, pts=[np.array(fig)], color=0)
-        
-        p1 = (cols, rows//2)
-        p2 = (int(cols-rows//2*av_m), 0)
-        p3 = (cols, 0)
-        fig = [p1, p2, p3]
-        cv.fillPoly(mask, pts=[np.array(fig)], color=0)
-        
-        cv.imshow("mask", mask)
-        cv.waitKey(3)
-        self.mask = mask
+        # if only one cluster
+        elif len(largest_labels) == 1:
+            lane_points = points[clusters == largest_labels[0]]
+            centroid_x = lane_points[np.argmax(lane_points[:, 0])][1]
+            image2 = image.copy()
+            for p in lane_points:
+                cv.circle(image2, (int(p[1]), int(p[0])), 5, (0,255,0), 2)
+            cv.imshow("Labeled points", image2)
+            cv.waitKey(3) 
+            cy = rows // 2
+            if centroid_x < (cols // 2):
+                cx = cols
+                self.publish_angle(1, 0.5, 0)
+
+            else:
+                cx = 0
+                self.publish_angle(-1, 0.5, 0)
+        else:
+            # if two clusters, find center of both
+            lane_centroids_x = []
+            lane_centroids_y = []
+            image2 = image.copy()
+            for label in largest_labels:
+
+                lane_points = points[clusters == label]
+                lane_points = lane_points[np.argsort(lane_points[:, 1])]
+
+                coefficients = np.polyfit(lane_points[:, 0], lane_points[:, 1], deg=1)
+                polynomial = np.poly1d(coefficients)
+
+                x_values = np.linspace(0, rows, num=100)
+                y_values = polynomial(x_values).astype(int)
+                
+                for p in lane_points:
+                    cv.circle(image2, (int(p[1]), int(p[0])), 5, label_to_color[label], 2)
+                for i in range(len(y_values) - 1):
+                    cv.line(image, (int(y_values[i]), int(x_values[i])), 
+                            (int(y_values[i+1]), int(x_values[i+1])), label_to_color[label], 5)
+                
+                centroid_x = np.mean(lane_points[:, 1]) 
+                centroid_y = np.mean(lane_points[:, 0]) 
+                lane_centroids_x.append(centroid_x)
+                lane_centroids_y.append(centroid_y)
+
+            # get cx from the average of the two clusters' centroids
+            cx = int(np.mean(lane_centroids_x))
+            cy = int(np.mean(lane_centroids_y))
+            self.publish_angle((2*cx-cols) / cols, float(cy) / rows, 0)
+
+        cv.arrowedLine(image, (cols//2,rows-1), (cx,cy), (255, 255, 255), 2)
+        cv.imshow("Polynomial lanes", image)
+        cv.imshow("Labeled points", image2)
+        cv.waitKey(3)         
         
     def publish_angle(self, coeff_x, coeff_y, missed_lanes):
         
-        if missed_lanes == 2:
-            self.offset_message.angular.z = 2
-        elif missed_lanes == 1:
-            self.offset_message.angular.z = 1
+        if (coeff_x > 1):
+            self.offset_message.angular.x = 1
+        elif (coeff_x < -1):
+            self.offset_message.angular.x = -1
+        elif (abs(coeff_x) < 0.15):
+            self.offset_message.angular.x = 0
         else:
-            if (coeff_x > 1):
-                self.offset_message.angular.x = 1
-            elif (coeff_x < -1):
-                self.offset_message.angular.x = -1
-            elif (abs(coeff_x) < 0.15):
-                self.offset_message.angular.x = 0
-            else:
-                self.offset_message.angular.x = coeff_x
-            self.offset_message.angular.y = coeff_y
-            self.offset_message.angular.z = 0
+            self.offset_message.angular.x = coeff_x
+        self.offset_message.angular.y = coeff_y
+        self.offset_message.angular.z = missed_lanes
         
         self.center_offset_publisher.publish(self.offset_message)
 
