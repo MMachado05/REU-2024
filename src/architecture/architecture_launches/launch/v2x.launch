@@ -7,7 +7,7 @@
   <arg name="lane_detector" default="kmeans" />
   <arg name="lane_name" default="northbound" />
   <arg name="redlight_behavior" default="adaptive" />
-  <arg name="record_rosbag" default="false" />
+  <arg name="measure_comfort" default="true" />
 
   <!-- =============== -->
   <!-- Topic arguments -->
