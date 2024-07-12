@@ -263,7 +263,7 @@ class BirdseyeLaneDetector:
         if lane_points is not None:
             for point in lane_points:
                 pnt = point[0]
-                if pnt[0] < c//2:
+                if pnt[0] < self.midpoint:
                     left_y.append(pnt[0])
                     left_x.append(pnt[1])
                 else:
@@ -274,35 +274,38 @@ class BirdseyeLaneDetector:
             return 
         
         # get coefficients for lsrl for left lane
-        if (len(left_x)!=0 and len(left_y)!=0):
+        if (len(left_x)>=10 and len(left_y)>=10):
             A = np.vstack([left_x, np.ones(len(left_x))]).T
             m_left, c_left = np.linalg.lstsq(A, left_y)[0]
         else:
             m_left = 0
             c_left = 0
-        # draw left line
-        cv.line(image, (self.compute_y(m_left, c_left, 0), 0), (self.compute_y(m_left, c_left, r), r), 120, 3)
+        
         
         # get coefficients for lsrl for right lane
-        if (len(right_x)!=0 and len(right_y)!=0):
+        if (len(right_x)>=10 and len(right_y)>=10):
             A = np.vstack([right_x, np.ones(len(right_x))]).T
             m_right, c_right = np.linalg.lstsq(A, right_y)[0]
         else:
             m_right = 0
             c_right = c
-        #draw right line
-        cv.line(image, (self.compute_y(m_right, c_right, 0), 0), (self.compute_y(m_right, c_right, r), r), 170, 3)
         
         self.draw_mask((m_left+m_right)/2, image)
         
+        image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
+        
         # compute midpoint of two lanes
         y_left = self.compute_y(m_left, c_left, r//2)
-        if y_left > c//2:
+        if y_left > self.midpoint:
             y_left = 0
+        else:
+            cv.line(image, (self.compute_y(m_left, c_left, 0), 0), (self.compute_y(m_left, c_left, r), r), (0, 0, 255), 3)
         
         y_right = self.compute_y(m_right, c_right, r//2)
-        if y_right < c//2:
+        if y_right < self.midpoint:
             y_right = c
+        else:
+            cv.line(image, (self.compute_y(m_right, c_right, 0), 0), (self.compute_y(m_right, c_right, r), r), (0, 255, 0), 3)
         
         cx = int((y_left+y_right)//2)
         cy = r // 2
@@ -316,8 +319,8 @@ class BirdseyeLaneDetector:
             self.publish_angle(angle, 0.5, 0)
 
         # draw, show & return result
-        cv.circle(image, (cx, cy), 3, 255, -1)    
-        cv.circle(image, (self.midpoint, r // 2), 5, 200, 3)  
+        cv.circle(image, (cx, cy), 3, (255, 255, 255), -1)    
+        cv.line(image, (self.midpoint, 0),(self.midpoint, r), (255, 0, 0), 3)  
         cv.imshow("Lines", image)
         cv.waitKey(3)
     
@@ -331,14 +334,14 @@ class BirdseyeLaneDetector:
             p3 = (0, 0)
             fig = [p1, p2, p3]
             cv.fillPoly(mask, pts=[np.array(fig)], color=0)
-            self.midpoint = cols//2 + int(-rows//2*av_m)
+            self.midpoint = int(cols//2 + int(-rows//3*av_m))
         else:
             p1 = (cols, rows//2)
             p2 = (int(cols-rows//2*av_m), 0)
             p3 = (cols, 0)
             fig = [p1, p2, p3]
             cv.fillPoly(mask, pts=[np.array(fig)], color=0)
-            self.midpoint = cols//2 - rows//2*av_m
+            self.midpoint = int(cols//2 - rows//3*av_m)
         
         cv.imshow("mask", mask)
         cv.waitKey(3)
