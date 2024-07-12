@@ -9,9 +9,6 @@ from std_msgs.msg import Float64
 
 distance = -1
 
-class Break (Exception):
-    pass
-
 def gps_position_cb(msg):
     global gps_lat, gps_lon, current_pose, distance
 
@@ -39,15 +36,9 @@ def calculate_distance():
             closest_idx = i
 
     # sum the total distance to the next intersection
-    total_distance = 0.0
-    try:
-        for i in range(closest_idx, len(waypoints) - 1):
-            total_distance = geodesic((waypoints[i][0], waypoints[i][1]), (waypoints[i + 1][0], waypoints[i + 1][1])).meters
-            for int in intersections:
-                if waypoints[i + 1] == int[:2]:
-                    raise Break
-    except Break:
-        pass
+    total_distance = min_distance
+    for i in range(closest_idx, len(waypoints) - 1):
+        total_distance += geodesic((waypoints[i][0], waypoints[i][1]), (waypoints[i + 1][0], waypoints[i + 1][1])).meters
 
     return total_distance
 
