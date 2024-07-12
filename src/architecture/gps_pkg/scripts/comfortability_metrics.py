@@ -11,6 +11,7 @@ global prev_coords, velocity, acceleration, dx_list, dv_list, a_list
 prev_coords = None
 velocity = 0.0
 accerleration = 0.0
+imu_angular_z = 0.0
 
 gps_latitude = 0.0
 gps_longitude = 0.0
