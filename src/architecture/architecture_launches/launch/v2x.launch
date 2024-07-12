@@ -135,17 +135,49 @@
       <param name="lane_name" type="str" value="$(arg lane_name)" />
     </node>
 
-    <!-- Comfort Meausure -->
-    <node name="comfortability_metrics" pkg="gps_pkg" type="comfortability_metrics.py"
-      required="true" output="screen">
-    </node>
+    <!-- comfortability -->
+    <group
+      ns="$(arg vehicle_namespace)" if="$(eval arg('measure_comfort'))">
+      <group if="$(eval arg('vehicle_namespace') == 'actor1')">
+        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+          <arg name="ns" value="reference" />
+          <arg name="device_ids" value="tcp://192.168.0.222:55555" />
+        </include>
 
-    <!-- Decide to record desired rosbags -->
-    <node if="$(eval arg('record_rosbags') == 'true')" name="rosbag_recorder" pkg="rosbag"
-      type="record"
-      args="-o v2x_rosbag_recording /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance"
-      required="true" output="screen">
-    </node>
+        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+          <arg name="ns" value="attitude" />
+          <arg name="device_ids" value="tcp://192.168.0.223:55555" />
+        </include>
+      </group>
+
+      <group if="$(eval arg('vehicle_namespace') == 'actor2')">
+        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+          <arg name="ns" value="reference" />
+          <arg name="device_ids" value="tcp://192.168.60.30:55555" />
+        </include>
+
+        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+          <arg name="ns" value="attitude" />
+          <arg name="device_ids" value="tcp://192.168.60.31:55555" />
+        </include>
+      </group>
+
+      <node
+        name="comfortability_metrics"
+        pkg="gps_pkg"
+        type="comfortability_metrics.py"
+        required="true"
+        output="screen">
+      </node>
+
+      <node
+        name="rosbag_recorder" pkg="rosbag"
+        type="record"
+        args="-o /home/reu-actor/reu_ws/comfort_bags/v2x_comfort /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance"
+        required="true"
+        output="screen">
+      </node>
+    </group>
 
     <!-- Open RQT Console -->
     <node

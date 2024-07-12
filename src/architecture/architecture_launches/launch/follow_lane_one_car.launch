@@ -7,7 +7,9 @@
     default="easy_birdseye" />
   <arg name="lane_detector" default="dbscan" />
   <arg
-    name="measure_comfort" default="true" />" <!-- ======================== -->
+    name="measure_comfort" default="true" />"
+
+  <!-- ======================== -->
   <!-- Internal topic arguments -->
   <!-- ======================== -->
   <arg name="preprocessed_img_topic"
@@ -109,7 +111,8 @@
   </group>
 
   <!-- comfortability -->
-  <group ns="$(arg vehicle_namespace)" if="$(eval arg('measure_comfort'))">
+  <group
+    ns="$(arg vehicle_namespace)" if="$(eval arg('measure_comfort'))">
     <group if="$(eval arg('vehicle_namespace') == 'actor1')">
       <include file="$(find piksi_multi_cpp)/launch/rover.launch">
         <arg name="ns" value="reference" />
@@ -145,7 +148,7 @@
     <node
       name="rosbag_recorder" pkg="rosbag"
       type="record"
-      args="-o /home/reu-actor/reu_ws/comfort_bags/v2x_rosbag_recording /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance"
+      args="-o /home/reu-actor/reu_ws/comfort_bags/lane_follow_comfort /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance"
       required="true"
       output="screen">
     </node>
