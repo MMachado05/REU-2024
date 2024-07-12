@@ -56,6 +56,10 @@ class DeepLSDLaneDetector:
         self.inference_thread.daemon = True
         self.inference_thread.start()
 
+        self.publisher_thread = threading.Thread(target=self.publisher)
+        self.publisher_thread.daemon = True
+        self.publisher_thread.start()
+
     # ---------------------------------------
     # ----------- Lane detection ------------
     # ---------------------------------------
@@ -78,13 +82,18 @@ class DeepLSDLaneDetector:
             rospy.logerr(f"DeepLSDLaneDetector:109 - CvBridge Error: {e}")
             return 0, 0
 
+    def publisher(self):
+        rate = rospy.Rate(60)
+        while not rospy.is_shutdown():
+            self.offset_message.angular.x = self.desired_twist_x
+            self.offset_message.angular.y = self.desired_twist_y
+            self.offset_message.angular.z = 1
+            self.center_offset_publisher.publish(self.offset_message)
+            rate.sleep()
+
     def _find_lane(self, ros_image: Image) -> None:
         with self.image_lock:
             self.ros_image = ros_image
-        self.offset_message.angular.x = self.desired_twist_x
-        self.offset_message.angular.y = self.desired_twist_y
-        self.offset_message.angular.z = 1
-        self.center_offset_publisher.publish(self.offset_message)
         
     def inference_deeplsd(self, ros_image):
     
