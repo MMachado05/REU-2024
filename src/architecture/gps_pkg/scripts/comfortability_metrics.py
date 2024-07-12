@@ -63,7 +63,6 @@ def timer_callback(event):
         rospy.loginfo("Waiting for more data ...")
 
 
-
 if __name__ == '__main__':
     # Initialize ROS node
     rospy.init_node('comfortability_metrics', anonymous=True)
