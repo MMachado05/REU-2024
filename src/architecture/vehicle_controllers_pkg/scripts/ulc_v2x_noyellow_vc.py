@@ -137,6 +137,10 @@ class ULCWithV2XNoYellowVC:
 
         # Misc.
         self.distance_from_intersection = 0.0
+        self.red_duration = 15
+        self.green_duration = 45
+        self.time_to_next_state = rospy.Duration(0)
+        self.current_light_state = RED
 
     def _dynamic_reconfig_callback(self, config, _):
         """
@@ -218,19 +222,19 @@ class ULCWithV2XNoYellowVC:
             str(self.time_to_next_state.secs) + "." + str(self.time_to_next_state.nsecs)
         )
 
-        potential_distance = self.speed * self.time_to_next_state
+        potential_distance = self.speed * time_left_as_float
         if self.current_light_state == RED:
             if potential_distance > self.distance_from_intersection:
                 final_speed = self.distance_from_intersection / (
                     time_left_as_float + TIME_TOLERANCE
                 )
         else:
-            if potential_distance < self.distance_from_intersection:
+            if potential_distance < distance_to_end_of_intersection:
                 potential_distance = self.speed * (
                     time_left_as_float + self.red_duration + TIME_TOLERANCE
                 )
                 if potential_distance < self.distance_from_intersection:
-                    final_speed = self.distance_from_intersection / (
+                    final_speed = distance_to_end_of_intersection / (
                         time_left_as_float + self.red_duration + TIME_TOLERANCE
                     )
 
