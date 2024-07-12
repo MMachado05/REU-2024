@@ -4,3 +4,7 @@ logs/
 .catkin_tools/
 src/ethz_piksi_ros/libsbp_ros_msgs/src/libsbp_ros_msgs/__pycache__/*
 src/rosboard/rosboard/__pycache__/*
+src/rosboard/rosboard/subscribers/__pycache__/*
+src/architecture/lane_detectors_pkg/scripts/DeepLSD/deeplsd/__pycache__/*
+src/architecture/lane_detectors_pkg/scripts/DeepLSD/deeplsd/models/__pycache__/*
+src/architecture/lane_detectors_pkg/scripts/DeepLSD/deeplsd/utils/__pycache__/*

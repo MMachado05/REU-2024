@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import rospy
 import math
 
-from std_msgs.msg import Empty, Float64, Int32, Bool, Time
-from geometry_msgs.msg import Twist
-from dynamic_reconfigure.server import Server
-from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
+import rospy
 from dataspeed_ulc_msgs.msg import UlcCmd  # Drive by wire UL
 from dbw_polaris_msgs.msg import SteeringCmd  # drive by wire native messages
+from dynamic_reconfigure.server import Server
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Bool, Empty
+from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
 
 LENGTH_OF_CRIT_ZONE = 5.0
 TIME_TOLERANCE = 1.5
@@ -26,12 +26,12 @@ class ULCWithV2XNoYellowVC:
     Exists largely for testing purposes.
     """
 
+    ulc_speed_publisher: rospy.Publisher
+    ulc_steering_publisher: rospy.Publisher
+    ulc_enable_publisher: rospy.Publisher
+
     lane_twist_subscriber: rospy.Subscriber
-    distance_subscriber: rospy.Subscriber
-    green_duration_subscriber: rospy.Subscriber
-    red_duration_subscriber: rospy.Subscriber
     light_state_subscriber: rospy.Subscriber
-    light_time_to_next_state_subscriber: rospy.Subscriber
     dyn_rcfg_srv: Server
 
     drive: bool
@@ -41,48 +41,17 @@ class ULCWithV2XNoYellowVC:
     is_driving: bool
 
     # Light stuff
-    distance_from_intersection: float
-
     current_light_state: bool
-    time_to_next_state: rospy.Duration
-
-    red_duration: int
-    green_duration: int
 
     def __init__(self):
         """
         Initializes the node.
         """
         # Node architecture
-        lane_name = rospy.get_param("~lane_name")
-
         rospy.init_node("simple_ulc_vc", anonymous=True)
-
-        self.light_state_subscriber = rospy.Subscriber(
-            f"/light/{lane_name}/state", Bool, self._get_light_state
+        rospy.loginfo(
+            "ulc_v2x_noyellow_vc:58 - Initializing V2X vehicle control node..."
         )
-        self.light_time_to_next_state_subscriber = rospy.Subscriber(
-            f"/light/{lane_name}/time_to_next_state",
-            Bool,
-            self._get_light_time_to_next_state,
-        )
-
-        self.green_duration_subscriber = rospy.Subscriber(
-            "/light/green_duration", Int32, self._get_green_duration
-        )
-        self.red_duration_subscriber = rospy.Subscriber(
-            "/light/red_duration", Int32, self._get_red_duration
-        )
-
-        self.lane_twist_subscriber = rospy.Subscriber(
-            rospy.get_param("~lane_twist_in_topic"), Twist, self._follow_lane
-        )
-        self.distance_subscriber = rospy.Subscriber(
-            rospy.get_param("~distance_from_intersection_topic"),
-            Float64,
-            self._get_distance,
-        )
-        self.dyn_rcfg_srv = Server(ULCNoYNoRNoGConfig, self._dynamic_reconfig_callback)
 
         # ULC-related node architecture
         self.ulc_speed_publisher = rospy.Publisher(
@@ -94,6 +63,17 @@ class ULCWithV2XNoYellowVC:
         self.ulc_enable_publisher = rospy.Publisher(
             "vehicle/enable", Empty, queue_size=1
         )
+
+        lane_name = rospy.get_param("~lane_name")
+
+        self.light_state_subscriber = rospy.Subscriber(
+            f"/light/{lane_name}/state", Bool, self._get_light_state
+        )
+
+        self.lane_twist_subscriber = rospy.Subscriber(
+            rospy.get_param("~lane_twist_in_topic"), Twist, self._follow_lane
+        )
+        self.dyn_rcfg_srv = Server(ULCNoYNoRNoGConfig, self._dynamic_reconfig_callback)
 
         self.drive_on = False
         self.speed = 0.0
@@ -134,9 +114,6 @@ class ULCWithV2XNoYellowVC:
         # Prepare message for enabling DBW
         self.empty_msg = Empty()
 
-        # Misc.
-        self.distance_from_intersection
-
     def _dynamic_reconfig_callback(self, config, _):
         """
         Callback for dynamic reconfigure.
@@ -147,20 +124,8 @@ class ULCWithV2XNoYellowVC:
 
         return config
 
-    def _get_distance(self, distance: Float64):
-        self.distance_from_intersection = distance.data
-
-    def _get_red_duration(self, red_duration: Int32):
-        self.red_duration = red_duration.data
-
-    def _get_green_duration(self, green_duration: Int32):
-        self.green_duration = green_duration.data
-
     def _get_light_state(self, state: Bool):
         self.current_light_state = state.data
-
-    def _get_light_time_to_next_state(self, time: Time):
-        self.time_to_next_state = rospy.Duration(time.data.secs, time.data.nsecs)
 
     # ----------------------------
     # --- Lane following logic ---
@@ -209,31 +174,16 @@ class ULCWithV2XNoYellowVC:
         #    \│     / θ    │y
         #           ───────┘
         #              x
-        distance_to_end_of_intersection = (
-            self.distance_from_intersection + LENGTH_OF_CRIT_ZONE
-        )
-        final_speed = self.speed
-        time_left_as_float = float(
-            str(self.time_to_next_state.secs) + "." + str(self.time_to_next_state.nsecs)
-        )
 
-        potential_distance = self.speed * self.time_to_next_state
-        if self.current_light_state == RED:
-            if potential_distance > self.distance_from_intersection:
-                final_speed = self.distance_from_intersection / (
-                    time_left_as_float + TIME_TOLERANCE
-                )
+        if self.current_light_state == GREEN:
+            self.speed_msg.linear_velocity = self.speed
         else:
-            if potential_distance < self.distance_from_intersection:
-                potential_distance = self.speed * (
-                    time_left_as_float + self.red_duration + TIME_TOLERANCE
+            if self.speed_msg.linear_velocity != 0:
+                rospy.loginfo(
+                    "ulc_v2x_stop_at_red_vc:189 - Received stop light, stopping..."
                 )
-                if potential_distance < self.distance_from_intersection:
-                    final_speed = self.distance_from_intersection / (
-                        time_left_as_float + self.red_duration + TIME_TOLERANCE
-                    )
+            self.speed_msg.linear_velocity = 0
 
-        self.speed_msg.linear_velocity = final_speed
         self._prep_steering_angle(turn_angle)
 
         self.ulc_speed_publisher.publish(self.speed_msg)

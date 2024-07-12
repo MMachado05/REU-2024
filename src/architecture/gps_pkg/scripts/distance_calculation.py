@@ -1,11 +1,11 @@
-import rospy
-import rospkg
-import yaml
-import math
+#!/usr/bin/env python3
 
-from sbp_ros_msgs.msg import MsgPosLlh
-from std_msgs.msg import Float64
+import rospkg
+import rospy
+import yaml
 from geopy.distance import geodesic
+from libsbp_ros_msgs.msg import MsgPosLlh
+from std_msgs.msg import Float64
 
 distance = -1
 
@@ -20,7 +20,7 @@ def gps_position_cb(msg):
 
     current_pose = {'lat': gps_lat, 'lon': gps_lon}
 
-    distance = calculate_distance(gps_lat, gps_lon)
+    distance = calculate_distance()
     distance_pub.publish(distance)
 
 def calculate_distance():
@@ -68,15 +68,17 @@ def open_waypoints(name):
 
 if __name__ == '__main__':
     rospy.init_node('distance_calculation')
+    rospy.loginfo('distance_calculation started ... ')
 
     lane_name = rospy.get_param('~lane_name')
+    
+    open_waypoints(lane_name)
 
     distance_pub = rospy.Publisher('distance', Float64, queue_size=1)
 
     gps_sub = rospy.Subscriber("reference/piksi/position_receiver_0/sbp/pos_llh", MsgPosLlh, gps_position_cb, queue_size=1)
 
-    open_waypoints(lane_name)
-
+    
     try:
         rospy.spin()
     except rospy.ROSInterruptException:
