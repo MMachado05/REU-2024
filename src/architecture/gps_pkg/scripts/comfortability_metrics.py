@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import rospy
-from std_msgs.msg import Float64
+from geopy.distance import geodesic
 from libsbp_ros_msgs.msg import MsgPosLlh
 from sensor_msgs.msg import Imu
-from geopy.distance import geodesic
+from std_msgs.msg import Float64
 
 global prev_coords, velocity, acceleration, dx_list, dv_list, a_list
 
@@ -32,6 +32,7 @@ def gps_position_cb(msg):
     gps_longitude = msg.lon # x
 
 def timer_callback(event):
+    global prev_coords
     current_cords = (gps_latitude, gps_longitude)
 
     if prev_coords is not None:

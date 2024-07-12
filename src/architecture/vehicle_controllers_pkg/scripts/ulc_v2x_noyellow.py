@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import rospy
 import math
 
-from std_msgs.msg import Empty, Float64, Int32, Bool, Time
-from geometry_msgs.msg import Twist
-from dynamic_reconfigure.server import Server
-from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
+import rospy
 from dataspeed_ulc_msgs.msg import UlcCmd  # Drive by wire UL
 from dbw_polaris_msgs.msg import SteeringCmd  # drive by wire native messages
+from dynamic_reconfigure.server import Server
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Bool, Empty, Float64, Int32, Time
+from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
 
 LENGTH_OF_CRIT_ZONE = 5.0
 TIME_TOLERANCE = 1.5
@@ -74,7 +74,7 @@ class ULCWithV2XNoYellowVC:
         )
         self.light_time_to_next_state_subscriber = rospy.Subscriber(
             f"/light/{lane_name}/time_to_next_state",
-            Bool,
+            Time,
             self._get_light_time_to_next_state,
         )
 
@@ -135,7 +135,7 @@ class ULCWithV2XNoYellowVC:
         self.empty_msg = Empty()
 
         # Misc.
-        self.distance_from_intersection
+        self.distance_from_intersection = 0.0
 
     def _dynamic_reconfig_callback(self, config, _):
         """

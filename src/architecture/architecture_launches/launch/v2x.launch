@@ -83,7 +83,7 @@
     </node>
 
     <!--COMFORTABILITY -->
-    <node name="comfortability_metrics" pkg="gps_pkg" type="comfortability-metrics.py" required="true" output="screen">
+    <node name="comfortability_metrics" pkg="gps_pkg" type="comfortability_metrics.py" required="true" output="screen">
     </node>
 
 
