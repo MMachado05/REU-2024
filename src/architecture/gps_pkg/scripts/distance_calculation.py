@@ -14,9 +14,7 @@ def gps_position_cb(msg):
 
     gps_lat = msg.lat
     gps_lon = msg.lon
-
-    rospy.loginfo(f'lat: {gps_lat} long: {gps_lon}')
-
+    
     current_pose = {'lat': gps_lat, 'lon': gps_lon}
 
     distance = calculate_distance()
