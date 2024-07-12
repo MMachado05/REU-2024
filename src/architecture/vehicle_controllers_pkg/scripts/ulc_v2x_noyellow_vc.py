@@ -10,7 +10,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool, Empty, Float64, Int32, Time
 from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
 
-LENGTH_OF_CRIT_ZONE = 5.0
+LENGTH_OF_CRIT_ZONE = 6.0
 TIME_TOLERANCE = 1.5
 
 RED = False

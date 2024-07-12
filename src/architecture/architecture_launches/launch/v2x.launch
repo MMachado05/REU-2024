@@ -173,7 +173,7 @@
       <node
         name="rosbag_recorder" pkg="rosbag"
         type="record"
-        args="-o /home/reu-actor/reu_ws/comfort_bags/v2x_comfort /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance"
+	      args="-o /home/reu-actor/reu_ws/comfort_bags/v2x_comfort /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance /$(arg vehicle_namespace)/velocity"
         required="true"
         output="screen">
       </node>
