@@ -57,7 +57,7 @@ def timer_callback(event):
         # Publish the most recent values from the lists
         velocity_pub.publish(dv_list[-1])
         acceleration_pub.publish(a_list[-1])
-        rospy.loginfo(f"Distance: {dx_list[-1]}, Velocity: {dv_list[-1]}, Acceleration: {a_list[-1]}")
+        #rospy.loginfo(f"Distance: {dx_list[-1]}, Velocity: {dv_list[-1]}, Acceleration: {a_list[-1]}")
     else:
         rospy.loginfo("Waiting for more data ...")
 
@@ -66,10 +66,10 @@ def timer_callback(event):
 if __name__ == '__main__':
     # Initialize ROS node
     rospy.init_node('comfortability_metrics', anonymous=True)
-    print('running gps calculations node ... ')
+    print('running comfortability_metrics node ... ')
 
     global duration
-    duration = 0.5 # in seconds
+    duration = 0.1 # in seconds
 
     # Publishers
     # distance_pub = rospy.Publisher('dist', Float64, queue_size=1)
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     # Subscriber
     gps_sub = rospy.Subscriber("reference/piksi/position_receiver_0/sbp/pos_llh", MsgPosLlh, gps_position_cb, queue_size=1)
-    imu_sub = rospy.Subscriber("vehicle/imu/raw_data", Imu, imu_cb, queue_size=1)
+    imu_sub = rospy.Subscriber("vehicle/imu/data_raw", Imu, imu_cb, queue_size=1)
 
     # Call this function every t seconds (intervals)
     rospy.Timer(rospy.Duration(duration), timer_callback)

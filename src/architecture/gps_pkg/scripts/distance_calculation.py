@@ -68,6 +68,7 @@ def open_waypoints(name):
 
 if __name__ == '__main__':
     rospy.init_node('distance_calculation')
+    rospy.loginfo('distance_calculation started ... ')
 
     lane_name = rospy.get_param('~lane_name')
     
