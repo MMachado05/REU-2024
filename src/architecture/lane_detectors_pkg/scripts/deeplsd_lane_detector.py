@@ -9,8 +9,8 @@ import cv2 as cv
 import numpy as np
 import math
 import torch
-import time
 import os
+import threading
 
 # from dynamic_reconfigure.server import Server
 # from lane_detectors_pkg.cfg import ...  # packageName.cfg
@@ -46,44 +46,48 @@ class DeepLSDLaneDetector:
         self.rosimg_cv_bridge = CvBridge()
         self.last_processed_time = 0
 
+        self.desired_twist_x = 0
+        self.desired_twist_y = 0
+
+        self.image_lock = threading.Lock()
+        self.ros_image = None
+
+        self.inference_thread = threading.Thread(target=self._run_inference_loop)
+        self.inference_thread.daemon = True
+        self.inference_thread.start()
+
     # ---------------------------------------
     # ----------- Lane detection ------------
     # ---------------------------------------
-    def _find_lane(self, ros_image: Image) -> None:
-        """
-        Detects a lane in the image and publishes the offset between the desired
-        midpoint, and the current midpoint.
 
-        The expected values to be published are angular x and y speeds within absolute
-        values of 1. In the case of an exceptional situation, the z angular velocity
-        will contain useful information:
-        * 1: No lane lines were detected.
-        * 2: Only one lane line was detected.
-        * 3: There was some other exceptional error.
+    def _run_inference_loop(self):
+        rate = rospy.Rate(5)  # 5 Hz inference rate
+        while not rospy.is_shutdown():
+            with self.image_lock:
+                if self.ros_image is not None:
+                    self.desired_twist_x, self.desired_twist_y = self._perform_inference(self.ros_image)
+            rate.sleep()
 
-        Paramaters
-        ----------
-        ros_image : Image
-            The preprocessed image to detect the lane in.
-        """
-        # TODO: Implement this!
+    def _perform_inference(self, ros_image):
         try:
-            current_time = time.time()
-            if current_time - self.last_processed_time >= 0.25:
-                self.last_processed_time = current_time
-                grayscale_cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(
-                    ros_image
-                )  # passthrough
-                grayscale_cv_image = grayscale_cv_image.copy()
-                ros_image = cv.cvtColor(grayscale_cv_image, cv.COLOR_GRAY2BGR)
-            else:
-                return
+            grayscale_cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(ros_image)
+            grayscale_cv_image = grayscale_cv_image.copy()
+            ros_image = cv.cvtColor(grayscale_cv_image, cv.COLOR_GRAY2BGR)
+            return self.inference_deeplsd(ros_image)
         except CvBridgeError as e:
-            rospy.logerr(f"largest_contour_lane_detector:109 - CvBridge Error: {e}")
-            self.offset_message.angular.z = 3
-            self.center_offset_publisher.publish(self.offset_message)
-            return
+            rospy.logerr(f"DeepLSDLaneDetector:109 - CvBridge Error: {e}")
+            return 0, 0
+
+    def _find_lane(self, ros_image: Image) -> None:
+        with self.image_lock:
+            self.ros_image = ros_image
+        self.offset_message.angular.x = self.desired_twist_x
+        self.offset_message.angular.y = self.desired_twist_y
+        self.offset_message.angular.z = 1
+        self.center_offset_publisher.publish(self.offset_message)
         
+    def inference_deeplsd(self, ros_image):
+    
         rows, cols, _ = ros_image.shape
 
         # draw horizontal lines to improve curve detection using DeepLSD
@@ -216,13 +220,9 @@ class DeepLSDLaneDetector:
         cv.waitKey(3)
 
         image_midpoint_x = cols // 2
-        desired_twist_x = (desired_midpoint_x - image_midpoint_x) / image_midpoint_x
-        desired_twist_y = (rows - desired_midpoint_y) / rows
-
-        self.offset_message.angular.x = desired_twist_x
-        self.offset_message.angular.y = desired_twist_y
-        self.offset_message.angular.z = 1
-        self.center_offset_publisher.publish(self.offset_message)
+        self.desired_twist_x = (desired_midpoint_x - image_midpoint_x) / image_midpoint_x
+        self.desired_twist_y = (rows - desired_midpoint_y) / rows
+        return self.desired_twist_x, self.desired_twist_y
 
 if __name__ == "__main__":
     try:
