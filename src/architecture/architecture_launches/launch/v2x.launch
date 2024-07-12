@@ -6,6 +6,7 @@
   <arg name="preprocessor" default="easy_birdseye" />
   <arg name="lane_detector" default="kmeans" />
   <arg name="lane_name" default="northbound" />
+  <arg name="redlight_behavior" default="adaptive" />
   <arg name="record_rosbag" default="false" />
 
   <!-- =============== -->
@@ -43,28 +44,30 @@
     </include>
 
     <!-- GPS Setup (specific to vehicle) -->
-    <group if="$(eval arg('vehicle_namespace') == 'actor1')">
-      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-        <arg name="ns" value="reference" />
-        <arg name="device_ids" value="tcp://192.168.0.222:55555" />
-      </include>
+    <group if="$(eval arg('redlight_behavior') == 'adaptive')">
+      <group if="$(eval arg('vehicle_namespace') == 'actor1')">
+        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+          <arg name="ns" value="reference" />
+          <arg name="device_ids" value="tcp://192.168.0.222:55555" />
+        </include>
 
-      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-        <arg name="ns" value="attitude" />
-        <arg name="device_ids" value="tcp://192.168.0.223:55555" />
-      </include>
-    </group>
+        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+          <arg name="ns" value="attitude" />
+          <arg name="device_ids" value="tcp://192.168.0.223:55555" />
+        </include>
+      </group>
 
-    <group if="$(eval arg('vehicle_namespace') == 'actor2')">
-      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-        <arg name="ns" value="reference" />
-        <arg name="device_ids" value="tcp://192.168.60.30:55555" />
-      </include>
+      <group if="$(eval arg('vehicle_namespace') == 'actor2')">
+        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+          <arg name="ns" value="reference" />
+          <arg name="device_ids" value="tcp://192.168.60.30:55555" />
+        </include>
 
-      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-        <arg name="ns" value="attitude" />
-        <arg name="device_ids" value="tcp://192.168.60.31:55555" />
-      </include>
+        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+          <arg name="ns" value="attitude" />
+          <arg name="device_ids" value="tcp://192.168.60.31:55555" />
+        </include>
+      </group>
     </group>
 
     <!-- Camera setup (specific to vehicle) -->
@@ -97,6 +100,7 @@
 
     <!-- Distance calculation for Vehicle Controller -->
     <node
+      if="$(eval arg('redlight_behavior') == 'adaptive')"
       name="distance_calculation"
       pkg="gps_pkg"
       type="distance_calculation.py"
@@ -108,6 +112,7 @@
 
     <!-- Create Vehicle Controller -->
     <node
+      if="$(eval arg('redlight_behavior') == 'adaptive')"
       name="vehicle_controller"
       pkg="vehicle_controllers_pkg"
       type="ulc_v2x_noyellow.py"
@@ -117,6 +122,17 @@
       <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
       <param name="lane_name" type="str" value="$(arg lane_name)" />
       <param name="distance_from_intersection_topic" type="str" value="distance" />
+    </node>
+    <node
+      if="$(eval arg('redlight_behavior') == 'stop')"
+      name="vehicle_controller"
+      pkg="vehicle_controllers_pkg"
+      type="ulc_v2x_stop_at_red_vc.py"
+      required="true"
+      output="screen"
+    >
+      <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
+      <param name="lane_name" type="str" value="$(arg lane_name)" />
     </node>
 
     <!-- Comfort Meausure -->
