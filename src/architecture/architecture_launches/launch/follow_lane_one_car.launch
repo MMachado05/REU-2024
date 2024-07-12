@@ -8,6 +8,7 @@
   <arg name="lane_detector" default="dbscan" />
   <arg
     name="measure_comfort" default="true" />"
+  <arg name="lane_name" default="northbound" />
 
   <!-- ======================== -->
   <!-- Internal topic arguments -->
@@ -151,6 +152,15 @@
       args="-o /home/reu-actor/reu_ws/comfort_bags/lane_follow_comfort /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance"
       required="true"
       output="screen">
+    </node>
+
+    <node
+     name="distance_calculaton"
+     pkg="gps_pkg"
+      type="distance_calculation.py"
+      required="true"
+      output="screen">
+      <param name="lane_name" type="str" value="$(arg lane_name)" />
     </node>
   </group>
 
