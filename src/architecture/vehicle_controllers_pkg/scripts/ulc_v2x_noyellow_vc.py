@@ -55,6 +55,7 @@ class ULCWithV2XNoYellowVC:
         """
         # Node architecture
         rospy.init_node("simple_ulc_vc", anonymous=True)
+        rospy.loginfo("ulc_v2x_noyellow_vc:58 - Initializing V2X vehicle control node...")
         
         # ULC-related node architecture
         self.ulc_speed_publisher = rospy.Publisher(

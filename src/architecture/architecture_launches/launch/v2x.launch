@@ -127,7 +127,7 @@
     <!-- Decide to record desired rosbags -->
     <node if="$(eval arg('record_rosbags') == 'true')" name="rosbag_recorder" pkg="rosbag"
       type="record"
-      args="-o v2x_rosbag_recording /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration"
+      args="-o v2x_rosbag_recording /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance"
       required="true" output="screen">
     </node>
 
