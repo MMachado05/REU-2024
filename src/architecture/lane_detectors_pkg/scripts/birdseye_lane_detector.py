@@ -68,6 +68,7 @@ class BirdseyeLaneDetector:
         
         # other
         self.mask = None
+        self.midpoint = None
 
         # Misc.
         self.rosimg_cv_bridge = CvBridge()
@@ -245,6 +246,8 @@ class BirdseyeLaneDetector:
         if self.mask is None or self.mask.shape != image.shape:
             self.mask = np.zeros((r, c), np.uint8)
             self.mask.fill(255)
+        if self.midpoint == None:
+            self.midpoint = c // 2
         
             
         image = cv.bitwise_and(image, self.mask)
@@ -314,6 +317,7 @@ class BirdseyeLaneDetector:
 
         # draw, show & return result
         cv.circle(image, (cx, cy), 3, 255, -1)    
+        cv.circle(image, (self.midpoint, r // 2), 5, 200, 3)  
         cv.imshow("Lines", image)
         cv.waitKey(3)
     
@@ -321,18 +325,20 @@ class BirdseyeLaneDetector:
         rows, cols = image.shape
         mask = np.zeros((rows, cols), np.uint8)
         mask.fill(255)
-        
-        p1 = (0, rows//2)
-        p2 = (int(-rows//2*av_m), 0)
-        p3 = (0, 0)
-        fig = [p1, p2, p3]
-        cv.fillPoly(mask, pts=[np.array(fig)], color=0)
-        
-        p1 = (cols, rows//2)
-        p2 = (int(cols-rows//2*av_m), 0)
-        p3 = (cols, 0)
-        fig = [p1, p2, p3]
-        cv.fillPoly(mask, pts=[np.array(fig)], color=0)
+        if (av_m < 0):
+            p1 = (0, rows//2)
+            p2 = (int(-rows//2*av_m), 0)
+            p3 = (0, 0)
+            fig = [p1, p2, p3]
+            cv.fillPoly(mask, pts=[np.array(fig)], color=0)
+            self.midpoint = cols//2 + int(-rows//2*av_m)
+        else:
+            p1 = (cols, rows//2)
+            p2 = (int(cols-rows//2*av_m), 0)
+            p3 = (cols, 0)
+            fig = [p1, p2, p3]
+            cv.fillPoly(mask, pts=[np.array(fig)], color=0)
+            self.midpoint = cols//2 - rows//2*av_m
         
         cv.imshow("mask", mask)
         cv.waitKey(3)

@@ -66,6 +66,7 @@ class BirdseyeLaneDetector:
         self.crop_hor = 0.5
         self.crop_ver = 0.5
         self.crop_orig = 0.5
+        self.eps = 70
 
         # Misc.
         self.rosimg_cv_bridge = CvBridge()
@@ -97,6 +98,7 @@ class BirdseyeLaneDetector:
         self.crop_hor = config.crop_lines_hor
         self.crop_ver = config.crop_lines_ver
         self.crop_orig = config.crop_orig
+        self.eps = config.eps
         
 
         return config
@@ -257,7 +259,7 @@ class BirdseyeLaneDetector:
         
         if len(points) == 0:
             print("No white pixels detected.")
-            self.publish_angle(None, None, 2)
+            self.publish_angle(0, 0.5, 2)
             return
 
         # downsample the points uniformly for clustering
@@ -267,7 +269,7 @@ class BirdseyeLaneDetector:
         points = points[::downsample_factor]
 
         # perform density based clustering
-        dbscan = DBSCAN(eps=70, min_samples=3) # 100
+        dbscan = DBSCAN(eps=self.eps, min_samples=3) # 100
         clusters = dbscan.fit_predict(points)
 
         # get the two clusters closest to bottom with certain minimum size
@@ -305,12 +307,12 @@ class BirdseyeLaneDetector:
             cv.waitKey(3) 
             cy = rows // 2
             if centroid_x < (cols // 2):
-                cx = cols
-                self.publish_angle(1, 0.5, 0)
+                cx = cols*3//4
+                self.publish_angle(0.5, 0.5, 0)
 
             else:
-                cx = 0
-                self.publish_angle(-1, 0.5, 0)
+                cx = cols//4
+                self.publish_angle(-0.5, 0.5, 0)
         else:
             # if two clusters, find center of both
             lane_centroids_x = []
