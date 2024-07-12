@@ -115,7 +115,7 @@
       if="$(eval arg('redlight_behavior') == 'adaptive')"
       name="vehicle_controller"
       pkg="vehicle_controllers_pkg"
-      type="ulc_v2x_noyellow.py"
+      type="ulc_v2x_noyellow_vc.py"
       required="true"
       output="screen"
     >
