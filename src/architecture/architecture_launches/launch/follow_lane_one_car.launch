@@ -155,7 +155,7 @@
     </node>
 
     <node
-     name="distance_calculator"
+     name="distance_calculaton"
      pkg="gps_pkg"
       type="distance_calculation.py"
       required="true"
