@@ -96,7 +96,7 @@
       <arg name="lane_twist_topic" value="$(arg lane_twist_topic)" />
     </include>
 
-    <!-- Distance calculation for Vehicle Controller -->
+    <!-- Distance calculation for Vehicle Controller (always runs!!! no matter adaptive or stopping)-->
     <node
       name="distance_calculation"
       pkg="gps_pkg"
@@ -132,7 +132,7 @@
       <param name="lane_name" type="str" value="$(arg lane_name)" />
     </node>
 
-    <!-- comfortability -->
+    <!-- Comfortability Metrics -->
     <group if="$(eval arg('measure_comfort'))">
       <node
         name="comfortability_metrics"
@@ -142,6 +142,7 @@
         output="screen">
       </node>
 
+      <!-- Rosbag Recorder -->
       <node
         name="rosbag_recorder" pkg="rosbag"
         type="record"

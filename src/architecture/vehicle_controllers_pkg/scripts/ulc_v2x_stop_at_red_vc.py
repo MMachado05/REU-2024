@@ -7,11 +7,12 @@ from dataspeed_ulc_msgs.msg import UlcCmd  # Drive by wire UL
 from dbw_polaris_msgs.msg import SteeringCmd  # drive by wire native messages
 from dynamic_reconfigure.server import Server
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool, Empty
+from std_msgs.msg import Bool, Empty, Float64
 from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
 
-LENGTH_OF_CRIT_ZONE = 5.0
-TIME_TOLERANCE = 1.5
+LENGTH_OF_CRIT_ZONE = 6.0 # meters
+TIME_TOLERANCE = 1.5 # seconds
+STOPPING_DISTANCE_FROM_INTERSECTION = 1.0 # meters
 
 RED = False
 GREEN = True
@@ -43,6 +44,9 @@ class ULCWithV2XNoYellowVC:
     # Light stuff
     current_light_state: bool
 
+    # Distance stuff
+    distance_from_intersection: float
+
     def __init__(self):
         """
         Initializes the node.
@@ -68,6 +72,12 @@ class ULCWithV2XNoYellowVC:
 
         self.light_state_subscriber = rospy.Subscriber(
             f"/light/{lane_name}/state", Bool, self._get_light_state
+        )
+
+        self.distance_subscriber = rospy.Subscriber(
+            rospy.get_param("~distance_from_intersection_topic"),
+            Float64,
+            self._get_distance,
         )
 
         self.lane_twist_subscriber = rospy.Subscriber(
@@ -114,6 +124,10 @@ class ULCWithV2XNoYellowVC:
         # Prepare message for enabling DBW
         self.empty_msg = Empty()
 
+        # Misc
+        self.distance_from_intersection = -1.0
+
+
     def _dynamic_reconfig_callback(self, config, _):
         """
         Callback for dynamic reconfigure.
@@ -126,6 +140,9 @@ class ULCWithV2XNoYellowVC:
 
     def _get_light_state(self, state: Bool):
         self.current_light_state = state.data
+
+    def _get_distance(self, distance: Float64):
+        self.distance_from_intersection = distance.data
 
     # ----------------------------
     # --- Lane following logic ---
@@ -178,11 +195,17 @@ class ULCWithV2XNoYellowVC:
         if self.current_light_state == GREEN:
             self.speed_msg.linear_velocity = self.speed
         else:
-            if self.speed_msg.linear_velocity != 0:
-                rospy.loginfo(
-                    "ulc_v2x_stop_at_red_vc:189 - Received stop light, stopping..."
-                )
-            self.speed_msg.linear_velocity = 0
+
+            # NOTE: if any problems are here, it would be 1 of the following (most likely):
+            #           1. The car slows down and stops too far after the intersection (and distance is positive) so it still goes.
+            #               a) change STOPPING_DISTANCE_FROM_INTERSECTION
+
+            if self.distance_from_intersection < STOPPING_DISTANCE_FROM_INTERSECTION:
+                self.speed_msg.linear_velocity = 0
+            else:
+                self.speed_msg.linear_velocity = self.speed
+
+        # Publishing speed & steering
 
         self._prep_steering_angle(turn_angle)
 
