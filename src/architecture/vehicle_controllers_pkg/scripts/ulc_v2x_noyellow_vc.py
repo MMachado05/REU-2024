@@ -214,6 +214,8 @@ class ULCWithV2XNoYellowVC:
         #    \│     / θ    │y
         #           ───────┘
         #              x
+
+        # Calculate final speed
         distance_to_end_of_intersection = (
             self.distance_from_intersection + LENGTH_OF_CRIT_ZONE
         )
@@ -233,8 +235,8 @@ class ULCWithV2XNoYellowVC:
                 potential_distance = self.speed * (
                     time_left_as_float + self.red_duration + TIME_TOLERANCE
                 )
-                if potential_distance < self.distance_from_intersection:
-                    final_speed = distance_to_end_of_intersection / (
+                if potential_distance > self.distance_from_intersection:
+                    final_speed = self.distance_from_intersection / (
                         time_left_as_float + self.red_duration + TIME_TOLERANCE
                     )
 
