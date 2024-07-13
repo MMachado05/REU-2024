@@ -138,29 +138,31 @@
     <!-- comfortability -->
     <group
       ns="$(arg vehicle_namespace)" if="$(eval arg('measure_comfort'))">
-      <group if="$(eval arg('vehicle_namespace') == 'actor1')">
-        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-          <arg name="ns" value="reference" />
-          <arg name="device_ids" value="tcp://192.168.0.222:55555" />
-        </include>
+      <group if="$(eval arg('redlight_behavior') == 'stop')" >
+	      <group if="$(eval arg('vehicle_namespace') == 'actor1')">
+		<include file="$(find piksi_multi_cpp)/launch/rover.launch">
+		  <arg name="ns" value="reference" />
+		  <arg name="device_ids" value="tcp://192.168.0.222:55555" />
+		</include>
 
-        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-          <arg name="ns" value="attitude" />
-          <arg name="device_ids" value="tcp://192.168.0.223:55555" />
-        </include>
-      </group>
+		<include file="$(find piksi_multi_cpp)/launch/rover.launch">
+		  <arg name="ns" value="attitude" />
+		  <arg name="device_ids" value="tcp://192.168.0.223:55555" />
+		</include>
+	      </group>
 
-      <group if="$(eval arg('vehicle_namespace') == 'actor2')">
-        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-          <arg name="ns" value="reference" />
-          <arg name="device_ids" value="tcp://192.168.60.30:55555" />
-        </include>
+	      <group if="$(eval arg('vehicle_namespace') == 'actor2')">
+		<include file="$(find piksi_multi_cpp)/launch/rover.launch">
+		  <arg name="ns" value="reference" />
+		  <arg name="device_ids" value="tcp://192.168.60.30:55555" />
+		</include>
 
-        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-          <arg name="ns" value="attitude" />
-          <arg name="device_ids" value="tcp://192.168.60.31:55555" />
-        </include>
-      </group>
+		<include file="$(find piksi_multi_cpp)/launch/rover.launch">
+		  <arg name="ns" value="attitude" />
+		  <arg name="device_ids" value="tcp://192.168.60.31:55555" />
+		</include>
+	      </group>
+	</group>
 
       <node
         name="comfortability_metrics"
