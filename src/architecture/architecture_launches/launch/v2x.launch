@@ -130,6 +130,7 @@
     >
       <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
       <param name="lane_name" type="str" value="$(arg lane_name)" />
+      <param name="distance_from_intersection_topic" type="str" value="distance" />
     </node>
 
     <!-- Comfortability Metrics -->

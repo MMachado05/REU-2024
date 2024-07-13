@@ -10,8 +10,6 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool, Empty, Float64
 from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
 
-LENGTH_OF_CRIT_ZONE = 6.0 # meters
-TIME_TOLERANCE = 1.5 # seconds
 STOPPING_DISTANCE_FROM_INTERSECTION = 1.0 # meters
 
 RED = False
@@ -74,7 +72,7 @@ class ULCWithV2XNoYellowVC:
             f"/light/{lane_name}/state", Bool, self._get_light_state
         )
 
-        self.distance_subscriber = rospy.Subscriber(
+        self.distance_from_intersection_subscriber = rospy.Subscriber(
             rospy.get_param("~distance_from_intersection_topic"),
             Float64,
             self._get_distance,
@@ -192,6 +190,7 @@ class ULCWithV2XNoYellowVC:
         #           ───────┘
         #              x
 
+        # Speed calculations
         if self.current_light_state == GREEN:
             self.speed_msg.linear_velocity = self.speed
         else:
