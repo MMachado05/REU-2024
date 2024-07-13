@@ -188,4 +188,7 @@
     />
   </group>
 
+  <!-- Rosboard -->
+  <include file="$(find rosboard)/launch/rosboard.launch"></include>
+
 </launch>
