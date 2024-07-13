@@ -261,6 +261,22 @@ class ULCWithV2XNoYellowVC:
         # (-600deg to 600deg converted to radians)
 
 
+    # MARCIAL TODO:
+    
+    # ----------------------------------
+    # --- Opening Image for ROSBOARD ---
+    # ----------------------------------
+    def _open_traffic_light_images(self) -> None:
+        pass
+        
+    # --------------------------------
+    # --- Adpative Speed Algorithm ---
+    # --------------------------------
+
+    def _calculate_dynamic_speed(self) -> None:
+        pass
+
+
 if __name__ == "__main__":
     try:
         vc = ULCWithV2XNoYellowVC()
