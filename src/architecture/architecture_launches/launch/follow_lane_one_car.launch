@@ -151,7 +151,7 @@
     <node
       name="rosbag_recorder" pkg="rosbag"
       type="record"
-      args="-o /home/reu-actor/reu_ws/comfort_bags/lane_follow_comfort /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance"
+      args="-o /home/reu-actor/reu_ws/comfort_bags/$(arg lane_detector)_$(arg lane_name) /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/velocity"
       required="true"
       output="screen">
     </node>
