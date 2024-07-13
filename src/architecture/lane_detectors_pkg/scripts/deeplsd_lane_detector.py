@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-import rospy
-from sensor_msgs.msg import Image
-from geometry_msgs.msg import Twist
-from cv_bridge import CvBridge, CvBridgeError
-from DeepLSD.deeplsd.models.deeplsd_inference import DeepLSD
-from sklearn.cluster import DBSCAN
-import cv2 as cv
-import numpy as np
 import math
-import torch
 import os
 import threading
+
+import cv2 as cv
+import numpy as np
+import rospy
+import torch
+from cv_bridge import CvBridge, CvBridgeError
+from DeepLSD.deeplsd.models.deeplsd_inference import DeepLSD
+from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Image
+from sklearn.cluster import DBSCAN
 
 # from dynamic_reconfigure.server import Server
 # from lane_detectors_pkg.cfg import ...  # packageName.cfg
@@ -136,12 +137,12 @@ class DeepLSDLaneDetector:
                     
                     # Filter based on slope and length
                     line_length = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-                    min_slope = 0.2
+                    min_slope = 0.4
                     min_length = 10
                     
                     if abs(slope) > min_slope and line_length > min_length:
 
-                        extend_factor = 1.1
+                        extend_factor = 1.8
                         x1_extended = int(x1 - (x2 - x1) * (extend_factor))
                         y1_extended = int(y1 - (y2 - y1) * (extend_factor))
                         x2_extended = int(x2 + (x2 - x1) * (extend_factor))
@@ -159,7 +160,7 @@ class DeepLSDLaneDetector:
             return red_pixels
     
         points = get_red_pixels(image2)
-        downsample_factor = int(len(points) / (0.03 * len(points)))
+        downsample_factor = int(len(points) / (0.02 * len(points)))
         points = points[::downsample_factor]   
 
         # UNSUPERVISED LEARNING USING DBSCAN
