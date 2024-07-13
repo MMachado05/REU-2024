@@ -193,6 +193,7 @@ class BirdseyeLaneDetector:
         
         # compute coefficient and publish velocity
         self.compute_center(img_canny)
+        cv.waitKey(3)
     
     def houghs(self, image):
     
@@ -279,7 +280,10 @@ class BirdseyeLaneDetector:
             m_left, c_left = np.linalg.lstsq(A, left_y)[0]
         else:
             m_left = 0
-            c_left = 0
+            if self.midpoint > c // 2:
+                c_left = self.midpoint - c // 4
+            else:
+                c_left = 0
         
         
         # get coefficients for lsrl for right lane
@@ -288,7 +292,10 @@ class BirdseyeLaneDetector:
             m_right, c_right = np.linalg.lstsq(A, right_y)[0]
         else:
             m_right = 0
-            c_right = c
+            if self.midpoint < c // 2:
+                c_right = self.midpoint + c // 4
+            else:
+                c_right = c
         
         self.draw_mask((m_left+m_right)/2, image)
         
@@ -298,20 +305,35 @@ class BirdseyeLaneDetector:
         y_left = self.compute_y(m_left, c_left, r//2)
         if y_left > self.midpoint:
             y_left = 0
+            # self.publish_angle(0.8, 0.5, 0)self.publish_angle(-0.8, 0.5, 0)
         else:
             cv.line(image, (self.compute_y(m_left, c_left, 0), 0), (self.compute_y(m_left, c_left, r), r), (0, 0, 255), 3)
         
         y_right = self.compute_y(m_right, c_right, r//2)
         if y_right < self.midpoint:
             y_right = c
+            # self.publish_angle(-0.8, 0.5, 0)
         else:
             cv.line(image, (self.compute_y(m_right, c_right, 0), 0), (self.compute_y(m_right, c_right, r), r), (0, 255, 0), 3)
         
         cx = int((y_left+y_right)//2)
         cy = r // 2
         mid = c // 2
-        
-        angle = float(math.degrees(math.atan2(abs(mid - cx), abs(rows - cy))) / 2) * 50 / 180
+        sharp = False
+        if cx < 0:
+            cx = 0
+            sharp = True
+        elif cx > c-1:
+            cx = col - 1
+            sharp = True
+        angle = float(math.degrees(math.atan2(abs(mid - cx), abs(rows - cy))) / 2) * 8 / 180
+
+        if sharp:
+            if cx<mid:
+                angle = 0.8
+            else:
+                angle = -0.8
+            print("Sharp")
         
         if cx < mid:
             self.publish_angle(-angle, 0.5, 0)
@@ -330,24 +352,25 @@ class BirdseyeLaneDetector:
         mask.fill(255)
         if (av_m < 0):
             p1 = (0, rows//2)
-            p2 = (int(-rows//2*av_m), 0)
+            p2 = (int(-rows*2//3*av_m), 0)
             p3 = (0, 0)
             fig = [p1, p2, p3]
             cv.fillPoly(mask, pts=[np.array(fig)], color=0)
-            self.midpoint = int(cols//2 + int(-rows//3*av_m))
+            self.midpoint = int(cols//2 + int(-rows//2*av_m))
         else:
             p1 = (cols, rows//2)
-            p2 = (int(cols-rows//2*av_m), 0)
+            p2 = (int(cols-rows*2//3*av_m), 0)
             p3 = (cols, 0)
             fig = [p1, p2, p3]
             cv.fillPoly(mask, pts=[np.array(fig)], color=0)
-            self.midpoint = int(cols//2 - rows//3*av_m)
+            self.midpoint = int(cols//2 - rows//2*av_m)
         
         cv.imshow("mask", mask)
         cv.waitKey(3)
         self.mask = mask
         
     def publish_angle(self, coeff_x, coeff_y, missed_lanes):
+        print(coeff_x)
         
         if missed_lanes == 2:
             self.offset_message.angular.z = 2
