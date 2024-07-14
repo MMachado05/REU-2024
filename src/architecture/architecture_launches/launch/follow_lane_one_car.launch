@@ -18,7 +18,7 @@
   <arg name="lane_twist_topic" value="desired_twist" />
 
   <!-- Load parameters from YAML file -->
-  <rosparam file="$(find preprocessors_pkg)/params/$(arg lane_detector).yaml" command="load" />
+  <!-- <rosparam file="$(find preprocessors_pkg)/params/$(arg lane_detector).yaml" command="load" /> -->
 
 
   <!-- =================================================== -->
@@ -64,6 +64,8 @@
       <arg name="preprocessor" value="$(arg preprocessor)" />
       <arg name="preprocessor_in_topic" value="/$(arg vehicle_namespace)/cam_pub/image_raw" />
       <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
+
+      <param if="$(arg lane_detector) == 'dbscan'" name="initial_crop_top" value="50"/>
     </include>
   </group>
 
@@ -177,6 +179,8 @@
       <arg name="lane_detector" value="$(arg lane_detector)" />
       <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
       <arg name="lane_twist_topic" value="$(arg lane_twist_topic)" />
+
+      <param name="display_desired_twist_image" value="true"/>
     </include>
   </group>
 
