@@ -223,18 +223,12 @@ class KMeansLaneDetector:
             2,
         )
 
-        desired_twist_x = (desired_midpoint_x - image_midpoint_x) / image_midpoint_x
-        desired_twist_y = 0.5
-
-        self.offset_message.angular.x = desired_twist_x
-        self.offset_message.angular.y = desired_twist_y
-        self.offset_message.angular.z = 0
+        self.desired_twist_x = (desired_midpoint_x - image_midpoint_x) / image_midpoint_x
+        self.desired_twist_y = 0.5
 
         if self.display_desired_twist_image:
             cv.imshow("Twist message visualization", color_cv_image)
             cv.waitKey(1)
-
-        self.center_offset_publisher.publish(self.offset_message)
 
 
 if __name__ == "__main__":
