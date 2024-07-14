@@ -73,6 +73,7 @@
     <!-- Start DBW -->
     <include file="$(find dbw_polaris_can)/launch/dbw.launch">
       <arg name="load_urdf" value="false" />
+      <arg name="can_ns" default="$(eval '/' + arg('vehicle_namespace') + '/can_bus_dbw')" />
     </include>
 
     <!-- Create Vehicle Controller -->

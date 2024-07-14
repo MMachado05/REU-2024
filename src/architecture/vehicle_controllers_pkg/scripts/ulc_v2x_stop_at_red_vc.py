@@ -7,10 +7,12 @@ from dataspeed_ulc_msgs.msg import UlcCmd  # Drive by wire UL
 from dbw_polaris_msgs.msg import SteeringCmd  # drive by wire native messages
 from dynamic_reconfigure.server import Server
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool, Empty, Float64
+from std_msgs.msg import Bool, Empty, Float64, Time
 from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
 
+INTERSECTION_OFFSET = -0.5 # meters (negative for closer to you, positive for further)
 STOPPING_DISTANCE_FROM_INTERSECTION = 3.0 # meters
+LENGTH_OF_CRIT_ZONE = 8.3 # meters
 
 RED = False
 GREEN = True
@@ -44,6 +46,8 @@ class ULCWithV2XNoYellowVC:
 
     # Distance stuff
     distance_from_intersection: float
+    duration_of_next_state: int
+    time_to_next_state: rospy.Duration
 
     def __init__(self):
         """
@@ -76,6 +80,16 @@ class ULCWithV2XNoYellowVC:
             rospy.get_param("~distance_from_intersection_topic"),
             Float64,
             self._get_distance,
+        )
+
+        # self.duration_of_next_state_subscriber = rospy.Subscriber(
+        #     f"/light/{lane_name}/duration_of_next_state", Int32, self._get_duration_of_next_state
+        # )
+
+        self.light_time_to_next_state_subscriber = rospy.Subscriber(
+            f"/light/{lane_name}/time_to_next_state",
+            Time,
+            self._get_light_time_to_next_state,
         )
 
         self.lane_twist_subscriber = rospy.Subscriber(
@@ -124,6 +138,8 @@ class ULCWithV2XNoYellowVC:
 
         # Misc
         self.distance_from_intersection = -1.0
+        self.time_to_next_state = rospy.Duration(0)
+        self.current_light_state = RED
 
 
     def _dynamic_reconfig_callback(self, config, _):
@@ -140,7 +156,15 @@ class ULCWithV2XNoYellowVC:
         self.current_light_state = state.data
 
     def _get_distance(self, distance: Float64):
-        self.distance_from_intersection = distance.data
+        self.distance_from_intersection = distance.data + INTERSECTION_OFFSET
+
+    # def _get_duration_of_next_state(self, duration_of_next_state: Int32):
+    #     self.duration_of_next_state = duration_of_next_state.data
+
+    def _get_light_time_to_next_state(self, time: Time):
+        self.time_to_next_state = rospy.Duration(time.data.secs, time.data.nsecs)
+
+    
 
     # ----------------------------
     # --- Lane following logic ---
@@ -191,22 +215,29 @@ class ULCWithV2XNoYellowVC:
         #              x
 
         # Speed calculations
+        distance_from_end_of_intersection = self.distance_from_intersection + LENGTH_OF_CRIT_ZONE
+        time_left_as_float = float(
+            str(self.time_to_next_state.secs) + "." + str(self.time_to_next_state.nsecs)
+        )
+        potential_distance = self.speed * self.time_left_as_float
+        final_speed = self.speed
+
+
         if self.current_light_state == GREEN:
-            self.speed_msg.linear_velocity = self.speed
+
+            # if ACTor can't make the length of intersection at green light
+            if potential_distance < distance_from_end_of_intersection:
+                if self.distance_from_intersection < STOPPING_DISTANCE_FROM_INTERSECTION:
+                    final_speed = 0
+
         else:
 
-            # NOTE: if any problems are here, it would be 1 of the following (most likely):
-            #           1. The car slows down and stops too far after the intersection (and distance is positive) so it still goes.
-            #               a) change STOPPING_DISTANCE_FROM_INTERSECTION
-            
-            # NOTE: steering publish 0 too
-
             if self.distance_from_intersection < STOPPING_DISTANCE_FROM_INTERSECTION:
-                self.speed_msg.linear_velocity = 0
-            else:
-                self.speed_msg.linear_velocity = self.speed
+                final_speed = 0
 
         # Publishing speed & steering
+
+        self.speed_msg.linear_velocity = final_speed
 
         self._prep_steering_angle(turn_angle)
 

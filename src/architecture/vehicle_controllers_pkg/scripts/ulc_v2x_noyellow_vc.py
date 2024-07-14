@@ -12,6 +12,10 @@ from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
 
 LENGTH_OF_CRIT_ZONE = 8.3 # meters (from front bumper to the start of intesection to back bumper to the end of the intersection)
 TIME_TOLERANCE = 1.5 # seconds
+INTERSECTION_OFFSET = -0.5
+STOPPING_DISTANCE_FROM_INTERSECTION = 1.0
+
+# NOTE: if rollover is a problem, change time tolerance, change intersection offset, add stopping distance from intersection code publish 0 code.
 
 RED = False
 GREEN = True
