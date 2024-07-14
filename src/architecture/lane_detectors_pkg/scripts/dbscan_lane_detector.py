@@ -8,6 +8,7 @@ from geometry_msgs.msg import Twist
 import cv2 as cv
 import numpy as np
 from sklearn.cluster import DBSCAN
+import threading
 
 
 class DBScanLaneDetector:
@@ -41,6 +42,7 @@ class DBScanLaneDetector:
     generated_houghlines: bool
     found_white_pixels: bool
 
+
     # ------------------------------------------------
     # ------- Internal state-related functions -------
     # ------------------------------------------------
@@ -52,7 +54,7 @@ class DBScanLaneDetector:
         rospy.init_node("dbscan_lane_detector", anonymous=True)
 
         self.preprocessed_img_subscriber = rospy.Subscriber(
-            rospy.get_param("~img_in_topic"), Image, self._find_lane
+            rospy.get_param("~img_in_topic"), Image, self._image_callback
         )
         self.center_offset_publisher = rospy.Publisher(
             rospy.get_param("~desired_twist_out_topic"), Twist, queue_size=1
@@ -83,8 +85,31 @@ class DBScanLaneDetector:
         self.generated_houghlines = True
         self.found_white_pixels = True
 
+        self.desired_twist_x = 0
+        self.desired_twist_y = 0
+
+        self.image_lock = threading.Lock()
+        self.ros_image = None
+
+        self.detection_thread = threading.Thread(target=self._run_detection_loop)
+        self.detection_thread.daemon = True
+        self.detection_thread.start()
+
+        self.publisher_thread = threading.Thread(target=self.publisher)
+        self.publisher_thread.daemon = True
+        self.publisher_thread.start()
+
         # Begin lane detection
         rospy.spin()
+
+    def publisher(self):
+        rate = rospy.Rate(60)
+        while not rospy.is_shutdown():
+            self.offset_message.angular.x = self.desired_twist_x
+            self.offset_message.angular.y = self.desired_twist_y
+            self.offset_message.angular.z = 1
+            self.center_offset_publisher.publish(self.offset_message)
+            rate.sleep()
 
     def _dynamic_reconfig_callback(self, config, _):
         """
@@ -113,7 +138,19 @@ class DBScanLaneDetector:
     # ---------------------------------------
     # ----------- Lane detection ------------
     # ---------------------------------------
-    def _find_lane(self, ros_image: Image) -> None:
+    def _image_callback(self, ros_image: Image) -> None:
+        with self.image_lock:
+            self.ros_image = ros_image
+
+    def _run_detection_loop(self):
+        rate = rospy.Rate(50)  
+        while not rospy.is_shutdown():
+            with self.image_lock:
+                if self.ros_image is not None:
+                    self._process_image(self.ros_image)
+            rate.sleep()
+
+    def _process_image(self, ros_image):
         """
         Detects a lane in the image and publishes the offset between the desired
         midpoint, and the current midpoint.
@@ -129,6 +166,8 @@ class DBScanLaneDetector:
         ----------
         ros_image : Image
             The preprocessed image to detect the lane in.
+
+        
         """
         try:
             grayscale_cv_image = self.rosimg_cv_bridge.imgmsg_to_cv2(
@@ -273,7 +312,7 @@ class DBScanLaneDetector:
 
             x_side = -1 if centroid_avg_midpoint_x < image_midpoint_x else 1
 
-            desired_twist_x = -(
+            self.desired_twist_x = -(
                 x_side
                 * (
                     (image_midpoint_x - abs(centroid_avg_midpoint_x - image_midpoint_x))
@@ -285,18 +324,14 @@ class DBScanLaneDetector:
                 rospy.loginfo("dbscan_lane_detector - Two lane lines found.")
                 self.num_line_last_seen = 2
 
-            desired_twist_x = (
+            self.desired_twist_x = (
                 centroid_avg_midpoint_x - image_midpoint_x
             ) / image_midpoint_x
-        desired_twist_y = (height - centroid_avg_midpoint_y) / height
-
-        self.offset_message.angular.x = desired_twist_x
-        self.offset_message.angular.y = desired_twist_y
-        self.offset_message.angular.z = 0
+        self.desired_twist_y = (height - centroid_avg_midpoint_y) / height
 
         if self.display_desired_twist_image:
             desired_midpoint_x = int(
-                image_midpoint_x + (desired_twist_x * image_midpoint_x)
+                image_midpoint_x + (self.desired_twist_x * image_midpoint_x)
             )
             desired_midpoint_y = centroid_avg_midpoint_y
             cv.arrowedLine(
@@ -308,9 +343,6 @@ class DBScanLaneDetector:
             )
             cv.imshow("Twist message visualization", color_cv_image)
             cv.waitKey(1)
-
-        self.center_offset_publisher.publish(self.offset_message)
-
 
 if __name__ == "__main__":
     try:

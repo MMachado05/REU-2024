@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist
 import cv2 as cv
 import numpy as np
 from sklearn.cluster import KMeans
+import threading
 
 from dynamic_reconfigure.server import Server
 from lane_detectors_pkg.cfg import KMeansLaneDetectorConfig  # packageName.cfg
@@ -47,7 +48,7 @@ class KMeansLaneDetector:
         rospy.init_node("kmeans_lane_detector", anonymous=True)
 
         self.preprocessed_img_subscriber = rospy.Subscriber(
-            rospy.get_param("~img_in_topic"), Image, self._find_lane
+            rospy.get_param("~img_in_topic"), Image, self._image_callback
         )
         self.center_offset_publisher = rospy.Publisher(
             rospy.get_param("~desired_twist_out_topic"), Twist, queue_size=1
@@ -71,6 +72,20 @@ class KMeansLaneDetector:
 
         self.could_not_kmeans = False
 
+        self.desired_twist_x = 0
+        self.desired_twist_y = 0
+
+        self.image_lock = threading.Lock()
+        self.ros_image = None
+
+        self.detection_thread = threading.Thread(target=self._run_detection_loop)
+        self.detection_thread.daemon = True
+        self.detection_thread.start()
+
+        self.publisher_thread = threading.Thread(target=self.publisher)
+        self.publisher_thread.daemon = True
+        self.publisher_thread.start()
+
     def _dynamic_reconfig_callback(self, config, _):
         """
         Callback function for dynamic reconfigure.
@@ -86,10 +101,31 @@ class KMeansLaneDetector:
 
         return config
 
+    def publisher(self):
+        rate = rospy.Rate(60)
+        while not rospy.is_shutdown():
+            self.offset_message.angular.x = self.desired_twist_x
+            self.offset_message.angular.y = self.desired_twist_y
+            self.offset_message.angular.z = 1
+            self.center_offset_publisher.publish(self.offset_message)
+            rate.sleep()
+
+    def _image_callback(self, ros_image: Image) -> None:
+        with self.image_lock:
+            self.ros_image = ros_image
+
+    def _run_detection_loop(self):
+        rate = rospy.Rate(50)  
+        while not rospy.is_shutdown():
+            with self.image_lock:
+                if self.ros_image is not None:
+                    self._process_image(self.ros_image)
+            rate.sleep()
+
     # ---------------------------------------
     # ----------- Lane detection ------------
     # ---------------------------------------
-    def _find_lane(self, ros_image: Image) -> None:
+    def _process_image(self, ros_image):
         """
         Detects a lane in the image and publishes the offset between the desired
         midpoint, and the current midpoint.
