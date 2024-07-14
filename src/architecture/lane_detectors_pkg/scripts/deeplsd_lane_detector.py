@@ -137,12 +137,12 @@ class DeepLSDLaneDetector:
                     
                     # Filter based on slope and length
                     line_length = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-                    min_slope = 0.4
+                    min_slope = 0.3
                     min_length = 10
                     
                     if abs(slope) > min_slope and line_length > min_length:
 
-                        extend_factor = 1.8
+                        extend_factor = 2.0
                         x1_extended = int(x1 - (x2 - x1) * (extend_factor))
                         y1_extended = int(y1 - (y2 - y1) * (extend_factor))
                         x2_extended = int(x2 + (x2 - x1) * (extend_factor))

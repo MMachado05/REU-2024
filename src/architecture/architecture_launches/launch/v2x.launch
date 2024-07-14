@@ -175,9 +175,10 @@
       <node
         name="rosbag_recorder" pkg="rosbag"
         type="record"
-	      args="-o /home/reu-actor/reu_ws/comfort_bags/v2x_comfort /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance /$(arg vehicle_namespace)/velocity"
+	      args="-o /home/reu-actor/reu_ws/comfort_bags/1_v2x_paper_info /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance /$(arg vehicle_namespace)/$(arg vehicle_namespace)/velocity /light/$(arg lane_name)/state /light/$(arg lane_name)/time_to_next_state"
         required="true"
         output="screen">
+      <!-- NOTE: Namespaces are messed up for the comfort node. This is a hack fix. -->
       </node>
     </group>
 
