@@ -12,4 +12,13 @@
     <param name="green_duration_topic" type="str" value="green_duration" />
     <param name="red_duration_topic" type="str" value="red_duration" />
   </node>
+
+  <node
+    name="serial_connection"
+    pkg="rosserial_python"
+    type="serial_node.py"
+    respawn="true"
+    output="screen"
+    args="tcp"
+  />
 </launch>
