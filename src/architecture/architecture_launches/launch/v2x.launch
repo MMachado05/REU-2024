@@ -35,7 +35,7 @@
   </group>
 
   <!-- ~~~~~ -->
-  <!-- ACTOr -->
+  <!-- ACTor -->
   <!-- ~~~~~ -->
   <group unless="$(eval arg('vehicle_namespace') == 'sim')" ns="$(arg vehicle_namespace)">
     <!-- Start DBW -->
@@ -44,30 +44,28 @@
     </include>
 
     <!-- GPS Setup (specific to vehicle) -->
-    <group if="$(eval arg('redlight_behavior') == 'adaptive')">
-      <group if="$(eval arg('vehicle_namespace') == 'actor1')">
-        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-          <arg name="ns" value="reference" />
-          <arg name="device_ids" value="tcp://192.168.0.222:55555" />
-        </include>
+    <group if="$(eval arg('vehicle_namespace') == 'actor1')">
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="reference" />
+        <arg name="device_ids" value="tcp://192.168.0.222:55555" />
+      </include>
 
-        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-          <arg name="ns" value="attitude" />
-          <arg name="device_ids" value="tcp://192.168.0.223:55555" />
-        </include>
-      </group>
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="attitude" />
+        <arg name="device_ids" value="tcp://192.168.0.223:55555" />
+      </include>
+    </group>
 
-      <group if="$(eval arg('vehicle_namespace') == 'actor2')">
-        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-          <arg name="ns" value="reference" />
-          <arg name="device_ids" value="tcp://192.168.60.30:55555" />
-        </include>
+    <group if="$(eval arg('vehicle_namespace') == 'actor2')">
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="reference" />
+        <arg name="device_ids" value="tcp://192.168.60.30:55555" />
+      </include>
 
-        <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-          <arg name="ns" value="attitude" />
-          <arg name="device_ids" value="tcp://192.168.60.31:55555" />
-        </include>
-      </group>
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="attitude" />
+        <arg name="device_ids" value="tcp://192.168.60.31:55555" />
+      </include>
     </group>
 
     <!-- Camera setup (specific to vehicle) -->
@@ -98,9 +96,8 @@
       <arg name="lane_twist_topic" value="$(arg lane_twist_topic)" />
     </include>
 
-    <!-- Distance calculation for Vehicle Controller -->
+    <!-- Distance calculation for Vehicle Controller (always runs!!! no matter adaptive or stopping)-->
     <node
-      if="$(eval arg('redlight_behavior') == 'adaptive')"
       name="distance_calculation"
       pkg="gps_pkg"
       type="distance_calculation.py"
@@ -133,37 +130,11 @@
     >
       <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
       <param name="lane_name" type="str" value="$(arg lane_name)" />
+      <param name="distance_from_intersection_topic" type="str" value="distance" />
     </node>
 
-    <!-- comfortability -->
-    <group
-      ns="$(arg vehicle_namespace)" if="$(eval arg('measure_comfort'))">
-      <group if="$(eval arg('redlight_behavior') == 'stop')" >
-	      <group if="$(eval arg('vehicle_namespace') == 'actor1')">
-		<include file="$(find piksi_multi_cpp)/launch/rover.launch">
-		  <arg name="ns" value="reference" />
-		  <arg name="device_ids" value="tcp://192.168.0.222:55555" />
-		</include>
-
-		<include file="$(find piksi_multi_cpp)/launch/rover.launch">
-		  <arg name="ns" value="attitude" />
-		  <arg name="device_ids" value="tcp://192.168.0.223:55555" />
-		</include>
-	      </group>
-
-	      <group if="$(eval arg('vehicle_namespace') == 'actor2')">
-		<include file="$(find piksi_multi_cpp)/launch/rover.launch">
-		  <arg name="ns" value="reference" />
-		  <arg name="device_ids" value="tcp://192.168.60.30:55555" />
-		</include>
-
-		<include file="$(find piksi_multi_cpp)/launch/rover.launch">
-		  <arg name="ns" value="attitude" />
-		  <arg name="device_ids" value="tcp://192.168.60.31:55555" />
-		</include>
-	      </group>
-	</group>
-
+    <!-- Comfortability Metrics -->
+    <group if="$(eval arg('measure_comfort'))">
       <node
         name="comfortability_metrics"
         pkg="gps_pkg"
@@ -172,10 +143,11 @@
         output="screen">
       </node>
 
+      <!-- Rosbag Recorder -->
       <node
         name="rosbag_recorder" pkg="rosbag"
         type="record"
-	      args="-o /home/reu-actor/reu_ws/comfort_bags/1_v2x_paper_info /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance /$(arg vehicle_namespace)/$(arg vehicle_namespace)/velocity /light/$(arg lane_name)/state /light/$(arg lane_name)/time_to_next_state"
+	      args="-o /home/reu-actor/reu_ws/comfort_bags/$(arg redlight_behavior)_$(arg lane_name)_$(lane_detector) /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/distance /$(arg vehicle_namespace)/velocity"
         required="true"
         output="screen">
       <!-- NOTE: Namespaces are messed up for the comfort node. This is a hack fix. -->

@@ -10,8 +10,8 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool, Empty, Float64, Int32, Time
 from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
 
-LENGTH_OF_CRIT_ZONE = 6.0
-TIME_TOLERANCE = 1.5
+LENGTH_OF_CRIT_ZONE = 8.3 # meters (from front bumper to the start of intesection to back bumper to the end of the intersection)
+TIME_TOLERANCE = 1.5 # seconds
 
 RED = False
 GREEN = True
@@ -28,8 +28,7 @@ class ULCWithV2XNoYellowVC:
 
     lane_twist_subscriber: rospy.Subscriber
     distance_subscriber: rospy.Subscriber
-    green_duration_subscriber: rospy.Subscriber
-    red_duration_subscriber: rospy.Subscriber
+    duration_of_next_state_subscriber: rospy.Subscriber
     light_state_subscriber: rospy.Subscriber
     light_time_to_next_state_subscriber: rospy.Subscriber
     dyn_rcfg_srv: Server
@@ -46,8 +45,7 @@ class ULCWithV2XNoYellowVC:
     current_light_state: bool
     time_to_next_state: rospy.Duration
 
-    red_duration: int
-    green_duration: int
+    duration_of_next_state: int
 
     def __init__(self):
         """
@@ -79,11 +77,8 @@ class ULCWithV2XNoYellowVC:
             self._get_light_time_to_next_state,
         )
 
-        self.green_duration_subscriber = rospy.Subscriber(
-            "/light/green_duration", Int32, self._get_green_duration
-        )
-        self.red_duration_subscriber = rospy.Subscriber(
-            "/light/red_duration", Int32, self._get_red_duration
+        self.duration_of_next_state_subscriber = rospy.Subscriber(
+            f"/light/{lane_name}/duration_of_next_state", Int32, self._get_duration_of_next_state
         )
 
         self.lane_twist_subscriber = rospy.Subscriber(
@@ -137,8 +132,7 @@ class ULCWithV2XNoYellowVC:
 
         # Misc.
         self.distance_from_intersection = 0.0
-        self.red_duration = 15
-        self.green_duration = 45
+        self.duration_of_next_state = 0.0
         self.time_to_next_state = rospy.Duration(0)
         self.current_light_state = RED
 
@@ -155,11 +149,8 @@ class ULCWithV2XNoYellowVC:
     def _get_distance(self, distance: Float64):
         self.distance_from_intersection = distance.data
 
-    def _get_red_duration(self, red_duration: Int32):
-        self.red_duration = red_duration.data
-
-    def _get_green_duration(self, green_duration: Int32):
-        self.green_duration = green_duration.data
+    def _get_duration_of_next_state(self, duration_of_next_state: Int32):
+        self.duration_of_next_state = duration_of_next_state.data
 
     def _get_light_state(self, state: Bool):
         self.current_light_state = state.data
@@ -233,11 +224,11 @@ class ULCWithV2XNoYellowVC:
         else:
             if potential_distance < distance_to_end_of_intersection:
                 potential_distance = self.speed * (
-                    time_left_as_float + self.red_duration + TIME_TOLERANCE
+                    time_left_as_float + self.duration_of_next_state + TIME_TOLERANCE
                 )
                 if potential_distance > self.distance_from_intersection:
                     final_speed = self.distance_from_intersection / (
-                        time_left_as_float + self.red_duration + TIME_TOLERANCE
+                        time_left_as_float + self.duration_of_next_state + TIME_TOLERANCE
                     )
 
         self.speed_msg.linear_velocity = final_speed
@@ -261,7 +252,7 @@ class ULCWithV2XNoYellowVC:
         # (-600deg to 600deg converted to radians)
 
 
-    # MARCIAL TODO:
+    # MARCIAL/RICKEY TODO:
     
     # ----------------------------------
     # --- Opening Image for ROSBOARD ---

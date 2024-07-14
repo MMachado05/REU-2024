@@ -168,13 +168,11 @@ class BirdseyeLaneDetector:
         #change perspective
         cv_image = self.change_perspective(cv_image)
         cv.imshow("Bird Eye", cv_image)
-        
-        # blur
-        blur = cv.medianBlur(cv_image, 5)
+
         
         # gray image
         # gray_image = cv.cvtColor(cv_image, cv.COLOR_BGR2GRAY)
-        gray_image = blur.copy()
+        gray_image = cv.cvtColor(cv_image, cv.COLOR_BGR2GRAY)
         
         #thresh
         ret, thresh_basic = cv.threshold(gray_image, # input image
@@ -182,10 +180,12 @@ class BirdseyeLaneDetector:
                                     255,    # max value in image
                                     cv.THRESH_BINARY) 
         #blur        
-        thresh_basic = cv.medianBlur(thresh_basic, 5)
+        thresh_basic = cv.medianBlur(thresh_basic, 3)
+
+        cv.imshow("thresh", thresh_basic)
         
         #canny
-        img_canny = cv.Canny(thresh_basic, 50, 150, 3)
+        img_canny = cv.Canny(thresh_basic, 50, 150, 5)
         
         img_canny = self.houghs(img_canny)
         
@@ -220,7 +220,7 @@ class BirdseyeLaneDetector:
                 # Extend the line if its length is shorter than 40 pixels and slope is >= 0.4 or <= -0.4
                 if length < 100 and abs(slope) >= 1.5: # 50, 0.5
                     # Extend the line by a factor of 1.5 times its original length
-                    extend_factor = 2
+                    extend_factor = 1.5
                     x1_extended = int(x1 - (x2 - x1) * (extend_factor - 1))
                     y1_extended = int(y1 - (y2 - y1) * (extend_factor - 1))
                     x2_extended = int(x2 + (x2 - x1) * (extend_factor - 1))
