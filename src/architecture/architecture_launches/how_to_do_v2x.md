@@ -7,8 +7,20 @@ gave you, run `export ROS_IP=<whatever hostname gave you>` to get those to match
 `/rosout` and `/rosagg`.
 
 # 2.a. If you're doing lane following
+I'll do this later.
 
 # 2.b. If you're doing V2X
+
+## Setting up the Pi
+This one's pretty straightforward.
+
+1. SSH into the pi (10.42.0.3).
+2. Run: `source reu_ws/devel/setup.bash`
+3. Run: `roslaunch traffic_light_pkg start_nonadaptive_ns_with_runner.launch`
+4. Ensure that whatever laptop being used to maintain the SSH connection *stays on*. If it
+even so much as puts its monitor to sleep, the connection will drop.
+
+## Setting up your vehicle
 After sourcing your `setup.bash` file, you'll need to launch the following:
 
 ```roslaunch architecture_launches v2x.launch```
