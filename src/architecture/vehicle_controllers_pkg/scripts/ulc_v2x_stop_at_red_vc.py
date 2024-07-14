@@ -10,7 +10,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool, Empty, Float64
 from vehicle_controllers_pkg.cfg import ULCNoYNoRNoGConfig
 
-STOPPING_DISTANCE_FROM_INTERSECTION = 1.0 # meters
+STOPPING_DISTANCE_FROM_INTERSECTION = 3.0 # meters
 
 RED = False
 GREEN = True
@@ -198,6 +198,8 @@ class ULCWithV2XNoYellowVC:
             # NOTE: if any problems are here, it would be 1 of the following (most likely):
             #           1. The car slows down and stops too far after the intersection (and distance is positive) so it still goes.
             #               a) change STOPPING_DISTANCE_FROM_INTERSECTION
+            
+            # NOTE: steering publish 0 too
 
             if self.distance_from_intersection < STOPPING_DISTANCE_FROM_INTERSECTION:
                 self.speed_msg.linear_velocity = 0
