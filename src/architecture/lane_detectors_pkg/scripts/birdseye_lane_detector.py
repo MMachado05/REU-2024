@@ -319,21 +319,8 @@ class BirdseyeLaneDetector:
         cx = int((y_left+y_right)//2)
         cy = r // 2
         mid = c // 2
-        sharp = False
-        if cx < 0:
-            cx = 0
-            sharp = True
-        elif cx > c-1:
-            cx = col - 1
-            sharp = True
-        angle = float(math.degrees(math.atan2(abs(mid - cx), abs(rows - cy))) / 2) * 8 / 180
 
-        if sharp:
-            if cx<mid:
-                angle = 0.8
-            else:
-                angle = -0.8
-            print("Sharp")
+        angle = float(math.degrees(math.atan2(abs(mid - cx), abs(rows - cy))) / 2) * 8 / 180
         
         if cx < mid:
             self.publish_angle(-angle, 0.5, 0)
@@ -369,9 +356,7 @@ class BirdseyeLaneDetector:
         cv.waitKey(3)
         self.mask = mask
         
-    def publish_angle(self, coeff_x, coeff_y, missed_lanes):
-        print(coeff_x)
-        
+    def publish_angle(self, coeff_x, coeff_y, missed_lanes):        
         if missed_lanes == 2:
             self.offset_message.angular.z = 2
         elif missed_lanes == 1:
