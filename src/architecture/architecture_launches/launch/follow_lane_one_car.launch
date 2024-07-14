@@ -120,12 +120,11 @@
         <arg name="device_ids" value="tcp://192.168.0.222:55555" />
       </include>
 
-      <!-- <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
         <arg name="ns" value="attitude" />
         <arg name="device_ids" value="tcp://192.168.0.223:55555" />
-      </include> -->
-      <!-- For some reason, attitude isn't working on ACTor1. We don't
-      technically need it, so we'll just comment it out for now. -->
+      </include>
+      <!-- NEED BOTH GPS -->
     </group>
 
     <group if="$(eval arg('vehicle_namespace') == 'actor2')">
