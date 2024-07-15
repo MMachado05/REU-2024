@@ -64,7 +64,7 @@ def bag_to_csv(bag_file, csv_file, topics):
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print("Usage: python multi_topic_bag_to_csv.py <input_bag_file> <output_csv_file> <topic1> [<topic2> ... <topicN>]")
+        print("Usage: python3 multi_topic_bag_to_csv.py <input_bag_file> <output_csv_file> <topic1> [<topic2> ... <topicN>]")
         sys.exit(1)
 
     bag_file = sys.argv[1]
