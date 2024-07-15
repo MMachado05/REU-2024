@@ -219,7 +219,7 @@ class ULCWithV2XNoYellowVC:
         time_left_as_float = float(
             str(self.time_to_next_state.secs) + "." + str(self.time_to_next_state.nsecs)
         )
-        potential_distance = self.speed * self.time_left_as_float
+        potential_distance = self.speed * time_left_as_float
         final_speed = self.speed
 
 

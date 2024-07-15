@@ -122,12 +122,12 @@
     ns="$(arg vehicle_namespace)" if="$(eval arg('measure_comfort'))">
     <group if="$(eval arg('vehicle_namespace') == 'actor1')">
       <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-        <arg name="ns" value="reference" />
+        <arg name="ns" value="attitude" />
         <arg name="device_ids" value="tcp://192.168.0.222:55555" />
       </include>
 
       <include file="$(find piksi_multi_cpp)/launch/rover.launch">
-        <arg name="ns" value="attitude" />
+        <arg name="ns" value="reference" />
         <arg name="device_ids" value="tcp://192.168.0.223:55555" />
       </include>
       <!-- NEED BOTH GPS -->
