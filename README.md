@@ -40,7 +40,7 @@ There are two primary launch files used for testing and running the ACTor vehicl
 `follow_lane_one_car.launch`:
 - `vehicle_namespace` (default: "robot1"): "robot1", "actor1", "actor2": This is the vehicle being run (the first option is to run Gazelle Sim).
 - `preprocessor` (default: "easy_birdseye"): "easy_birdseye", "full", "passthrough", "crop_only": The initial image preprocessor.
-- `lane_detector` (default: "dbscan"): "dbscan", "kmeans", "birdsdbs", "birdseye", "deeplsd", "kmeans", "largest_contour": The lane detection algorithm. **Note:** the "birds-" family of lane detectors *require* the "passthrough" preprocessor.
+- `lane_detector` (default: "dbscan"): "dbscan", "kmeans", "birdsdbs", "birdseye", "deeplsd", "kmeans", "largest_contour": The lane detection algorithm. **Note:** the "birds-" family of lane detectors *requires* the "passthrough" preprocessor.
 - `lane_name` (default: "northbound"): "northbound", "eastbound": the H lot lane the car is driving in. The inner lane is northbound.
 
 `v2x.launch`:
