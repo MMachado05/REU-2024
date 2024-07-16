@@ -1,0 +1,187 @@
+<launch>
+  <!-- ============== -->
+  <!-- Node arguments -->
+  <!-- ============== -->
+  <arg name="vehicle_namespace" default="robot1" />
+  <arg name="preprocessor"
+    default="easy_birdseye" />
+  <arg name="lane_detector" default="dbscan" />
+  <arg
+    name="measure_comfort" default="true" />"
+  <arg name="lane_name" default="northbound" />
+
+  <!-- ======================== -->
+  <!-- Internal topic arguments -->
+  <!-- ======================== -->
+  <arg name="preprocessed_img_topic"
+    value="lane_preprocessed_img" />
+  <arg name="lane_twist_topic" value="desired_twist" />
+
+  <!-- Load parameters from YAML file -->
+  <!-- <rosparam file="$(find preprocessors_pkg)/params/$(arg lane_detector).yaml" command="load" /> -->
+
+
+  <!-- =================================================== -->
+  <!-- Vehicle, camera subscribing, and vehicle controller -->
+  <!-- =================================================== -->
+  <!-- ~~~~~~~~~~~~~~~~ -->
+  <!-- If Using Gazelle -->
+  <!-- ~~~~~~~~~~~~~~~~ -->
+  <group
+    if="$(eval arg('vehicle_namespace') == 'robot1')">
+    <!-- Set up gazelle (comes with RQT Console set up) -->
+    <include file="$(find gazelle_sim_ltu_reu)/launch/ltu_reu.launch" />
+
+    <!-- Vehicle Controller -->
+    <group ns="$(arg vehicle_namespace)">
+      <node
+        name="vehicle_controller"
+        pkg="vehicle_controllers_pkg"
+        type="gazelle_noyellow_norsu_nogps_vc.py"
+        required="true"
+        output="screen"
+      >
+        <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
+        <param name="cmd_vel_out_topic" type="str" value="cmd_vel" />
+      </node>
+
+      <!-- Preprocessor with correct camera topic name -->
+      <include file="$(find architecture_launches)/launch/packages/preprocessor.launch">
+        <arg name="preprocessor" value="$(arg preprocessor)" />
+        <arg name="preprocessor_in_topic" value="camera/image_raw" />
+        <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
+      </include>
+    </group>
+  </group>
+
+  <!-- ~~~~~~~~~~~~~~~~~ -->
+  <!-- If Using an ACTor -->
+  <!-- ~~~~~~~~~~~~~~~~~ -->
+  <!-- Preprocessor for non-sim vehicles -->
+  <group
+    unless="$(eval arg('vehicle_namespace') == 'robot1')" ns="$(arg vehicle_namespace)">
+    <include file="$(find architecture_launches)/launch/packages/preprocessor.launch">
+      <arg name="preprocessor" value="$(arg preprocessor)" />
+      <arg name="preprocessor_in_topic" value="/$(arg vehicle_namespace)/cam_pub/image_raw" />
+      <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
+
+      <param if="$(arg lane_detector) == 'dbscan'" name="initial_crop_top" value="50"/>
+    </include>
+  </group>
+
+  <!-- Vehicle control for non-sim vehicles -->
+  <group
+    unless="$(eval arg('vehicle_namespace') == 'robot1')" ns="$(arg vehicle_namespace)">
+    <!-- Start DBW -->
+    <include file="$(find dbw_polaris_can)/launch/dbw.launch">
+      <arg name="load_urdf" value="false" />
+      <arg name="can_ns" default="$(eval '/' + arg('vehicle_namespace') + '/can_bus_dbw')" />
+    </include>
+
+    <!-- Create Vehicle Controller -->
+    <node
+      name="vehicle_controller"
+      pkg="vehicle_controllers_pkg"
+      type="ulc_noyellow_norsu_nogps_vc.py"
+      required="true"
+      output="screen"
+    >
+      <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
+    </node>
+
+    <!-- Open RQT Console -->
+    <node
+      name="rqt_console"
+      pkg="rqt_reconfigure"
+      type="rqt_reconfigure"
+      args="-t"
+    />
+  </group>
+
+  <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  <!-- Set up camera publisher based on ACTor camera ID -->
+  <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+  <group if="$(eval arg('vehicle_namespace') == 'actor1')"
+    ns="$(arg vehicle_namespace)">
+    <include file="$(find simple_camera_publisher)/launch/camera_publisher.launch">
+      <arg name="source"
+        value="/dev/v4l/by-id/usb-Arducam_Technology_Co.__Ltd._USB_2.0_Camera_SN0001-video-index0" />
+    </include>
+  </group>
+
+  <group
+    if="$(eval arg('vehicle_namespace') == 'actor2')" ns="$(arg vehicle_namespace)">
+    <include file="$(find simple_camera_publisher)/launch/camera_publisher.launch">
+      <arg name="source"
+        value="/dev/v4l/by-id/usb-Sonix_Technology_Co.__Ltd._USB_2.0_Camera_SN0001-video-index0" />
+    </include>
+  </group>
+
+  <!-- comfortability -->
+  <group
+    ns="$(arg vehicle_namespace)" if="$(eval arg('measure_comfort'))">
+    <group if="$(eval arg('vehicle_namespace') == 'actor1')">
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="attitude" />
+        <arg name="device_ids" value="tcp://192.168.0.222:55555" />
+      </include>
+
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="reference" />
+        <arg name="device_ids" value="tcp://192.168.0.223:55555" />
+      </include>
+      <!-- NEED BOTH GPS -->
+    </group>
+
+    <group if="$(eval arg('vehicle_namespace') == 'actor2')">
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="reference" />
+        <arg name="device_ids" value="tcp://192.168.60.30:55555" />
+      </include>
+
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="attitude" />
+        <arg name="device_ids" value="tcp://192.168.60.31:55555" />
+      </include>
+    </group>
+
+    <node
+      name="comfortability_metrics"
+      pkg="gps_pkg"
+      type="comfortability_metrics.py"
+      required="true"
+      output="screen">
+    </node>
+
+    <node
+      name="rosbag_recorder" pkg="rosbag"
+      type="record"
+      args="-o /home/reu-actor/reu_ws/comfort_bags/$(arg lane_detector)_$(arg lane_name) /$(arg vehicle_namespace)/imu /$(arg vehicle_namespace)/acceleration /$(arg vehicle_namespace)/velocity"
+      required="true"
+      output="screen">
+    </node>
+
+    <node
+     name="distance_calculaton"
+     pkg="gps_pkg"
+      type="distance_calculation.py"
+      required="true"
+      output="screen">
+      <param name="lane_name" type="str" value="$(arg lane_name)" />
+    </node>
+  </group>
+
+  <!-- ============= -->
+  <!-- Lane detector -->
+  <!-- ============= -->
+  <group ns="$(arg vehicle_namespace)">
+    <include file="$(find architecture_launches)/launch/packages/lane_detector.launch">
+      <arg name="lane_detector" value="$(arg lane_detector)" />
+      <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
+      <arg name="lane_twist_topic" value="$(arg lane_twist_topic)" />
+
+      <param name="display_desired_twist_image" value="true"/>
+    </include>
+  </group>
+
+</launch>

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>gazelle_sim_line_course_obs</name>
+  <version>0.0.1</version>
+  <description>GazelleSim line following course with obstacles.</description>
+
+  <maintainer email="gderose2@gmail.com">Giuseppe DeRose Jr.</maintainer>
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+</package>

@@ -1,0 +1,12 @@
+lane_following_preprocessor:
+  initial_crop_top: 55
+  # use_canny: 
+  # white_thresh: 
+
+vehicle_controller:
+  drive_on: false
+  # twist_multiplier: 
+
+lane_detector:
+  display_desired_twist_image: true
+  min_slope_abs: 0.5

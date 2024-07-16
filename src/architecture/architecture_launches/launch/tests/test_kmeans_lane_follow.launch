@@ -1,0 +1,41 @@
+<launch>
+  <include file="$(find gazelle_sim_ltu_reu)/launch/ltu_reu.launch" />
+
+  <arg name="preprocessed_img_topic" value="lane_preprocessed_img" />
+  <arg name="lane_twist_topic" value="desired_twist" />
+
+  <group ns="robot1">
+    <node
+      name="lane_following_preprocessor"
+      pkg="preprocessors_pkg"
+      type="easy_birdseye_preprocessor.py"
+      required="true"
+      output="screen"
+    >
+      <param name="img_in_topic" type="str" value="camera/image_raw" />
+      <param name="img_out_topic" type="str" value="$(arg preprocessed_img_topic)" />
+    </node>
+
+    <node
+      name="lane_detector"
+      pkg="lane_detectors_pkg"
+      type="kmeans_lane_detector.py"
+      required="true"
+      output="screen"
+    >
+      <param name="img_in_topic" type="str" value="$(arg preprocessed_img_topic)" />
+      <param name="desired_twist_out_topic" type="str" value="$(arg lane_twist_topic)" />
+    </node>
+
+    <node
+      name="vehicle_controller"
+      pkg="vehicle_controllers_pkg"
+      type="gazelle_noyellow_norsu_nogps_vc.py"
+      required="true"
+      output="screen"
+    >
+      <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
+      <param name="cmd_vel_out_topic" type="str" value="cmd_vel" />
+    </node>
+  </group>
+</launch>

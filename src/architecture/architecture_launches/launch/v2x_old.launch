@@ -1,0 +1,127 @@
+<launch>
+  <!-- ============== -->
+  <!-- Node arguments -->
+  <!-- ============== -->
+  <arg name="vehicle_namespace" default="actor1" />
+  <arg name="preprocessor" default="easy_birdseye" />
+  <arg name="lane_detector" default="kmeans" />
+  <arg name="lane_name" default="northbound" />
+
+  <!-- =============== -->
+  <!-- Topic arguments -->
+  <!-- =============== -->
+  <!-- <arg name="vehicle_namespace" value="robot1" /> -->
+
+  <arg name="preprocessor_in_topic" value="camera/image_raw" />
+  <arg name="preprocessed_img_topic" value="lane_preprocessed_img" />
+  <arg name="lane_twist_topic" value="desired_twist" />
+
+  <!-- =================== -->
+  <!-- =================== -->
+  <!--       Vehicle       -->
+  <!-- =================== -->
+  <!-- =================== -->
+  <!-- TODO: It would probably be nicer if these long ass vehicle-prep bits were each in
+                their own launch files. -->
+  <group ns="$(arg vehicle_namespace)">
+    <include file="$(find architecture_launches)/launch/packages/lane_detector.launch">
+      <arg name="lane_detector" value="$(arg lane_detector)" />
+      <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
+      <arg name="lane_twist_topic" value="$(arg lane_twist_topic)" />
+    </include>
+  </group>
+
+  <group if="$(eval arg('vehicle_namespace') == 'actor1')" ns="$(arg vehicle_namespace)">
+    <include file="$(find simple_camera_publisher)/launch/camera_publisher.launch">
+      <arg name="source"
+        value="/dev/v4l/by-id/usb-Arducam_Technology_Co.__Ltd._USB_2.0_Camera_SN0001-video-index0" />
+    </include>
+  </group>
+
+  <group if="$(eval arg('vehicle_namespace') == 'actor2')" ns="$(arg vehicle_namespace)">
+    <include file="$(find simple_camera_publisher)/launch/camera_publisher.launch">
+      <arg name="source"
+        value="/dev/v4l/by-id/usb-Sonix_Technology_Co.__Ltd._USB_2.0_Camera_SN0001-video-index0" />
+    </include>
+  </group>
+
+  <group unless="$(eval arg('vehicle_namespace') == 'robot1')" ns="$(arg vehicle_namespace)">
+    <include file="$(find architecture_launches)/launch/packages/preprocessor.launch">
+      <arg name="preprocessor" value="$(arg preprocessor)" />
+      <arg name="preprocessor_in_topic" value="/$(arg vehicle_namespace)/cam_pub/image_raw" />
+      <arg name="preprocessed_img_topic" value="$(arg preprocessed_img_topic)" />
+    </include>
+  </group>
+
+  <group ns="$(arg vehicle_namespace)">
+    <!-- Start DBW -->
+    <include file="$(find dbw_polaris_can)/launch/dbw.launch">
+      <arg name="load_urdf" value="false" />
+    </include>
+
+    <!-- Create Vehicle Controller -->
+    <node
+      name="vehicle_controller"
+      pkg="vehicle_controllers_pkg"
+      type="ulc_v2x_noyellow.py"
+      required="true"
+      output="screen"
+    >
+      <param name="lane_twist_in_topic" type="str" value="$(arg lane_twist_topic)" />
+      <param name="lane_name" type="str" value="$(arg lane_name)" />
+      <param name="distance_from_intersection_topic" type="str" value="distance" />
+    </node>
+
+    <node
+      name="distance_calculation"
+      pkg="gps_pkg"
+      type="distance_calculation.py"
+      required="true"
+      output="screen"
+    >
+      <param name="lane_name" type="str" value="$(arg lane_name)" />
+    </node>
+
+    <!--COMFORTABILITY -->
+    <node name="comfortability_metrics" pkg="gps_pkg" type="comfortability_metrics.py" required="true" output="screen">
+    </node>
+
+
+    <!-- Open RQT Console -->
+    <node
+      name="rqt_console"
+      pkg="rqt_reconfigure"
+      type="rqt_reconfigure"
+      args="-t"
+    />
+  </group>
+
+  <group ns="$(arg vehicle_namespace)">
+    <group if="$(eval arg('vehicle_namespace') == 'actor1')">
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="reference" />
+        <arg name="device_ids" value="tcp://192.168.0.222:55555" />
+      </include>
+
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="attitude" />
+        <arg name="device_ids" value="tcp://192.168.0.223:55555" />
+      </include>
+    </group>
+
+    <group if="$(eval arg('vehicle_namespace') == 'actor2')">
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="reference" />
+        <arg name="device_ids" value="tcp://192.168.60.30:55555" />
+      </include>
+
+      <include file="$(find piksi_multi_cpp)/launch/rover.launch">
+        <arg name="ns" value="attitude" />
+        <arg name="device_ids" value="tcp://192.168.60.31:55555" />
+      </include>
+    </group>
+  </group>
+
+  <!-- TODO: Add ROSBoard eventually, once everything else is working fine. -->
+
+</launch>

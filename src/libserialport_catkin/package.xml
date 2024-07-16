@@ -1,0 +1,11 @@
+<package format="2">
+    <name>libserialport_catkin</name>
+    <version>2.7.4</version>
+    <description>Catkin wrapper for libserialport.</description>
+    <maintainer email="brik@ethz.ch">Rik Bähnemann</maintainer>
+
+    <license>See libserialport</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <buildtool_depend>catkin_simple</buildtool_depend>
+</package>

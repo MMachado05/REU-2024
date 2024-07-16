@@ -1,0 +1,43 @@
+<launch>
+
+  <!-- ==================== -->
+  <!-- GazelleSim Arguments -->
+  <!-- ==================== -->
+  <arg name="show_dynamic_reconfigure" default="true" />
+
+
+  <!-- ========================= -->
+  <!-- Set simulation parameters -->
+  <!-- ========================= -->
+  <param name="map_dir" value="$(find gazelle_sim_ltu_reu)/map" />
+  <rosparam command="load"
+            file="$(find gazelle_sim_ltu_reu)/map/ltu_reu.yaml" />
+
+  <!-- ============= -->
+  <!-- Define robots -->
+  <!-- ============= -->
+  <rosparam>
+    robot_list: ["robot1"]
+  </rosparam>
+  
+  <!-- Define robot1 -->
+  <group ns="robot1">
+    <rosparam command="load"
+              file="$(find gazelle_sim_ltu_reu)/robot/ACTor.yaml" />
+    <rosparam>
+        Xr_init:  0.0
+        Yr_init:  0.0
+        Theta_init: deg(0.0)
+    </rosparam>
+  </group>
+
+
+  <!-- ================= -->
+  <!-- Launch GazelleSim -->
+  <!-- ================= -->
+  <include file="$(find gazelle_sim)/launch/gazelle_sim.launch">
+    <arg name="show_dynamic_reconfigure" default="true" />
+  </include>
+
+
+</launch>

@@ -1,0 +1,16 @@
+<launch>
+  <include file="$(find architecture_launches)/launch/tests/test_preproc_sim.launch" />
+
+  <group ns="robot1">
+    <node
+      name="dbs_line_detector"
+      pkg="lane_detectors_pkg"
+      type="dbscan_lane_detector.py"
+      required="true"
+      output="screen"
+    >
+      <param name="img_in_topic" type="str" value="image_preproc" />
+      <param name="desired_twist_out_topic" type="str" value="desired_twist" />
+    </node>
+  </group>
+</launch>

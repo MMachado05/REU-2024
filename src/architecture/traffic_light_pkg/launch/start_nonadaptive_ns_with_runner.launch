@@ -1,0 +1,27 @@
+<launch>
+  <group ns="light">
+    <node
+      name="traffic_runner"
+      pkg="traffic_light_pkg"
+      type="traffic_light_runner.py"
+      required="true"
+      output="screen"
+    >
+      <param name="run_light_topic" type="str" value="run" />
+    </node>
+    <node
+      name="traffic_light"
+      pkg="traffic_light_pkg"
+      type="non_adaptive_ns.py"
+      required="true"
+      output="screen"
+    >
+      <param name="run_light_topic" type="str" value="run" />
+      <param name="mode_topic" type="str" value="mode" />
+      <param name="northbound_light_state_topic" type="str" value="northbound_light_state" />
+      <param name="eastbound_light_state_topic" type="str" value="eastbound_light_state" />
+      <param name="green_duration_topic" type="str" value="green_duration" />
+      <param name="red_duration_topic" type="str" value="red_duration" />
+    </node>
+  </group>
+</launch>

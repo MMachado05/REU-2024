@@ -1,0 +1,17 @@
+<launch>
+    <group ns="my_camera">
+
+        <!-- launch the node -->
+        <node name="cam_pub" pkg="simple_camera_publisher" type="cam_pub" respawn="true" respawn_delay="10" output="screen">
+            <!-- Use a specific camera path -->
+            <!--<param name="source" type="string" value="/dev/v4l/by-id/my_camera_id" /> -->
+
+            <!-- Flip the image before publishing -->
+            <param name="hflip" type="bool" value="false" />
+
+            <!-- Show output in CV window -->
+            <param name="show_output" type="bool" value="true" />
+        </node>
+
+    </group>
+</launch>

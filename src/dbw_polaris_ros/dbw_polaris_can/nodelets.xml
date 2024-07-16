@@ -1,0 +1,9 @@
+<library path="lib/libdbw_polaris_can">
+  <class name="dbw_polaris_can/DbwNodelet"
+         type="dbw_polaris_can::DbwNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description> 
+      Dataspeed Polaris drive-by-wire nodelet
+    </description>
+  </class>
+</library>

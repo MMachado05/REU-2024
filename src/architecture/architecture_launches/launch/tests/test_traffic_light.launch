@@ -1,0 +1,19 @@
+<launch>
+  <!-- Here's how you *actually* start dynamic reconfigure: -->
+  <node
+    name="rqt_console"
+    pkg="rqt_reconfigure"
+    type="rqt_reconfigure"
+    args="-t"
+  >
+  </node>
+
+  <node
+    name="traffic_light"
+    pkg="traffic_light_pkg"
+    type="non_adaptive_ns.py"
+    required="true"
+    output="screen"
+  >
+  </node>
+</launch>

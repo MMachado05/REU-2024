@@ -1,0 +1,24 @@
+<launch>
+  <node
+    name="traffic_light"
+    pkg="traffic_light_pkg"
+    type="non_adaptive_ns.py"
+    required="true"
+    output="screen"
+  >
+    <param name="mode_topic" type="str" value="mode" />
+    <param name="northbound_light_state_topic" type="str" value="northbound_light_state" />
+    <param name="eastbound_light_state_topic" type="str" value="eastbound_light_state" />
+    <param name="green_duration_topic" type="str" value="green_duration" />
+    <param name="red_duration_topic" type="str" value="red_duration" />
+  </node>
+
+  <node
+    name="serial_connection"
+    pkg="rosserial_python"
+    type="serial_node.py"
+    respawn="true"
+    output="screen"
+    args="tcp"
+  />
+</launch>
