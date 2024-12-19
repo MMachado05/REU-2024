@@ -23,6 +23,11 @@ Principal Investigators:
 - Dr. Chan-Jin Chung
 - Dr. Joshua Siegel
 
+### Final Presentations and Demos
+
+- Recap video and public demo: https://www.youtube.com/watch?v=BIIuYoUQsSU
+- Research presentation: https://www.youtube.com/watch?v=aCp3Hq--BZs
+
 ## Testing and Launching
 
 Ubuntu 20.04 "Focal Fossa" is recommended. ROS Noetic should be installed.
